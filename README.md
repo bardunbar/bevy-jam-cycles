@@ -1,113 +1,45 @@
-_Brought to you by the Bevy Jam working group._
+# Bevy Jam 5 - Cycles
 
-# Bevy Quickstart
+My workspace for the Bevy Jam 5, but we'll see how far along we get. I make no promises.
 
-This template is a great way to get started on a new [Bevy](https://bevyengine.org/) game—especially for a game jam!
-Start with a [basic project structure](#write-your-game) and [CI / CD](#release-your-game) that can deploy to [itch.io](https://itch.io).
-You can [try this template in your web browser!](https://the-bevy-flock.itch.io/bevy-quickstart)
+## Goals
+- To make a simple game
+- To integrate lua scripting in a minor way
 
-Don't want to read through the whole README? [@ChristopherBiscardi](https://github.com/ChristopherBiscardi) made a video on how to use the template from start to finish:
+## Brainstorm
+My initial idea was to create some sort of simple economic simulation taking place in a solar system where planetary orbits matter. However, in order to get something like this done in a reasonable time frame, especially with my constraints it will need to be dead simple. An inspiration of mine that does simplistic economic simulation justice is the game [Slipways](https://store.steampowered.com/app/1264280/Slipways/) which I believe was also born out of a game jam (using pico-8!).
 
-[<img src="./docs/thumbnail.png" width=40% height=40% alt="A video tutorial for bevy_quickstart"/>](https://www.youtube.com/watch?v=ESBRyXClaYc)
+One way to make planetary orbits matter mechanically is for any routes established between planets to care about changing distance, otherwise the planet positions might as well be static. Some ways to make distance matter are as follows:
 
-## Prerequisites
+- The cost of establishing or maintaining the route changes.
+- Ships may have an effective range and sometimes may not be able to make long trips.
+- Planets themselves could act as vessels, meaning resources could be stockpiled on a planet until it is close to a target.
+- The cost of goods only available from one planet would fluctuate based on distance.
+- Actions could be taken on board the ship in transit which require specific travel times. For example, a refinery ship might convert one resource to another en route and require a travel time of 2 cycles to complete.
 
-We assume that you know how to use Bevy already and have seen the [official Quick Start Guide](https://bevyengine.org/learn/quick-start/introduction/).
+In order to make trade necessary, resources need to be scarce and/or exclusive to certain planets or stations.
 
-## Create a new game
+### Keep It Simple
+I want to limit the number of interacting systems in this game so that it would be possible to implement. I also want to limit the amount of UI and art needed for the game as I will have little time to implement either.
 
-Install [`cargo-generate`](https://github.com/cargo-generate/cargo-generate) and run the following commands:
+Would it be possible to limit the game to one resource? Something like a generic "goods" resource. If we pursue a delivery company aesthetic then this single resource would make sense.
 
-```sh
-cargo generate TheBevyFlock/bevy_quickstart --branch cargo-generate
-git branch --move main
-```
+### Objectives
 
-Then [create a GitHub repository](https://github.com/new) and push your local repository to it.
+What is the objective of the game? To create a prosperous civilization? To make a large sum of money as some sort of transport corporation? You could be the logistics department of some large company, continually receiving job orders to transport cargo. This creates a potential fail state if too many orders go unfulfilled for too long. The puzzle of the game would be using a limited number of ships to establish routes in order to get your packages to their destinations. In some ways this idea reminds me a lot of [Mini Metro](https://store.steampowered.com/app/287980/Mini_Metro/) but where the routes are point to point and the destinations move.
 
-<details>
-  <summary>This template can also be set up manually.</summary>
+### The Board
+Step one will be to make the board, in this case the board will be composed of some central object (eg. The sun) surrounded by several satellites (eg. planets). I'd like to keep the terms generic because it leaves open the door for having additional scales of gameplay; Planetary system, solar system, local cluster, etc. But for the purposes of this jam we'll be focusing on a single scale.
 
-Navigate to the top of [this GitHub repository](https://github.com/TheBevyFlock/bevy_quickstart/) and select `Use this template > Create a new repository`:
+Each satellite will produce and consume resources.
 
-![UI demonstration](./docs/readme-manual-setup.png)
+### Moment To Moment
 
-Clone your new Github repository to a local repository and push a commit with the following changes:
+Clicking a satellite (with a ship?) will start to establish a route, dragging to another satellite will confirm the route. A ship will then start transferring cargo to the destination and will automatically return with cargo and repeat so long as the route remains open.
 
-- Delete `LICENSE`, `README`, and `docs/` files.
-- Search for and replace instances of `bevy_quickstart` with the name of your project.
-- Adjust the `env` variables in [`.github/workflows/release.yaml`](./.github/workflows/release.yaml).
+Clicking the route will cancel the route, allowing the ship to finish and stop at the destination satellite.
 
-</details>
+Routes have a max range and will automatically cancel themselves if they would attempt to fly to an invalid destination. You want to avoid getting your ships stranded on a satellite while its too far away for travel!
 
-## Write your game
-
-The best way to get started is to play around with what you find in [`src/game/`](./src/game).
-
-This template comes with a basic project structure that you may find useful:
-
-| Path                                     | Description                                           |
-|------------------------------------------|-------------------------------------------------------|
-| [`src/lib.rs`](./src/lib.rs)             | App setup                                             |
-| [`src/screen/`](./src/screen)            | Splash screen, title screen, playing screen, etc.     |
-| [`src/game/`](./src/game)                | Game mechanics & content (replace with your own code) |
-| [`src/ui/`](./src/ui)                    | Reusable UI widgets & theming                         |
-| [`src/dev_tools.rs`](./src/dev_tools.rs) | Dev tools for dev builds                              |
-
-Feel free to move things around however you want, though.
-
-If you are new to Bevy, the patterns used in this template may look a bit weird at first glance.
-See our [Design Document](./docs/design.md) for more information on how we structured the code and why.
-
-> [!Tip]
-> Be sure to check out the [3rd-party tools](./docs/tooling.md) we recommend!
-
-## Run your game
-
-Running your game locally is very simple:
-
-- Use `cargo run` to run a native dev build.
-- Use [`trunk serve`](https://trunkrs.dev/) to run a web dev build.
-
-If you're using [VS Code](https://code.visualstudio.com/), this template comes with a [`.vscode/tasks.json`](./.vscode/tasks.json) file.
-
-<details>
-  <summary>Run release builds</summary>
-
-- Use `cargo run --profile release-native --no-default-features` to run a native release build.
-- Use `trunk serve --release --no-default-features` to run a web release build.
-
-</details>
-
-<details>
-    <summary>(Optional) Improve your compile times</summary>
-
-[`.cargo/config_fast_builds.toml`](./.cargo/config_fast_builds.toml) contains documentation on how to set up your environment to improve compile times.
-After you've fiddled with it, rename it to `.cargo/config.toml` to enable it.
-
-</details>
-
-## Release your game
-
-This template uses [GitHub workflows](https://docs.github.com/en/actions/using-workflows) to run tests and build releases.
-See [Workflows](./docs/workflows.md) for more information.
-
-## Known Issues
-
-There are some known issues in Bevy that require some arcane workarounds.
-To keep this template simple, we have opted not to include those workarounds.
-You can read about them in the [Known Issues](./docs/known-issues.md) document.
-
-## License
-
-The source code in this repository is licensed under any of the following at your option:
-
-- [CC0-1.0 License](./LICENSE-CC0-1.0.txt)
-- [MIT License](./LICENSE-MIT.txt)
-- [Apache License, Version 2.0](./LICENSE-Apache-2.0.txt)
-
-We hold no patent rights to anything presented in this repository.
-
-## Credits
-
-The [assets](./assets) in this repository are all 3rd-party. See the [credits screen](./src/screen/credits.rs) for more information.
+### I Think We've Got It - In Summary
+For this jam I will make a simple resource management game inspired by the likes of [Slipways](https://store.steampowered.com/app/1264280/Slipways/) and [Mini Metro](https://store.steampowered.com/app/287980/Mini_Metro/) where you manage the assignment of ships owned by a large stellar transport corporation. You have to puzzle out the best way to transport goods from start to destination using ships with a limited range flying between planets that are constantly moving relative to one another. If ever you fail to live up to corporate standards... you lose!
