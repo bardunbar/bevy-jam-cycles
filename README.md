@@ -43,3 +43,6 @@ Routes have a max range and will automatically cancel themselves if they would a
 
 ### I Think We've Got It - In Summary
 For this jam I will make a simple resource management game inspired by the likes of [Slipways](https://store.steampowered.com/app/1264280/Slipways/) and [Mini Metro](https://store.steampowered.com/app/287980/Mini_Metro/) where you manage the assignment of ships owned by a large stellar transport corporation. You have to puzzle out the best way to transport goods from start to destination using ships with a limited range flying between planets that are constantly moving relative to one another. If ever you fail to live up to corporate standards... you lose!
+
+## 7/21/24 - Beginnings
+The first step is to make the board. I am going to set up a simple planetary system made from circles traveling in circular orbits around a large central circle. Ideally I will be able to fit the game entirely on to one screen. It would be nice if there was no need to handle camera movement or zoom.

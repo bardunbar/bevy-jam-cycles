@@ -7,8 +7,9 @@ mod ui;
 use bevy::{
     asset::AssetMetaCheck,
     audio::{AudioPlugin, Volume},
-    prelude::*,
+    prelude::*, window::WindowResolution,
 };
+use bevy_vector_shapes::Shape2dPlugin;
 
 pub struct AppPlugin;
 
@@ -39,6 +40,7 @@ impl Plugin for AppPlugin {
                         canvas: Some("#bevy".to_string()),
                         fit_canvas_to_parent: true,
                         prevent_default_event_handling: true,
+                        resolution: WindowResolution::new(720.0, 720.0),
                         ..default()
                     }
                     .into(),
@@ -54,6 +56,7 @@ impl Plugin for AppPlugin {
 
         // Add other plugins.
         app.add_plugins((game::plugin, screen::plugin, ui::plugin));
+        app.add_plugins(Shape2dPlugin::default());
 
         // Enable dev tools for dev builds.
         #[cfg(feature = "dev")]
