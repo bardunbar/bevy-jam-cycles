@@ -5,21 +5,21 @@ use bevy_vector_shapes::{painter::ShapePainter, shapes::DiscPainter};
 
 use crate::screen::Screen;
 
-use super::player::SpawnPlayer;
+// use super::player::SpawnPlayer;
 
 pub(super) fn plugin(app: &mut App) {
-    app.observe(spawn_level);
+    // app.observe(spawn_level);
     app.add_systems(Update, draw_level.run_if(in_state(Screen::Playing)));
 }
 
 #[derive(Event, Debug)]
 pub struct SpawnLevel;
 
-fn spawn_level(_trigger: Trigger<SpawnLevel>, mut commands: Commands) {
-    // The only thing we have in our level is a player,
-    // but add things like walls etc. here.
-    // commands.trigger(SpawnPlayer);
-}
+// fn spawn_level(_trigger: Trigger<SpawnLevel>, mut commands: Commands) {
+//     // The only thing we have in our level is a player,
+//     // but add things like walls etc. here.
+//     commands.trigger(SpawnPlayer);
+// }
 
 fn draw_level(mut painter: ShapePainter) {
     painter.hollow = true;
