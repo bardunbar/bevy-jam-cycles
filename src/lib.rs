@@ -7,7 +7,8 @@ mod ui;
 use bevy::{
     asset::AssetMetaCheck,
     audio::{AudioPlugin, Volume},
-    prelude::*, window::WindowResolution,
+    prelude::*,
+    window::WindowResolution,
 };
 use bevy_vector_shapes::Shape2dPlugin;
 
