@@ -76,6 +76,8 @@ enum AppSet {
     RecordInput,
     /// Do everything else (consider splitting this into further variants).
     Update,
+    /// Render Vector Shapes
+    Render,
 }
 
 fn spawn_camera(mut commands: Commands) {
