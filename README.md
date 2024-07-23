@@ -1,6 +1,6 @@
 # Bevy Jam 5 - Cycles
 
-My workspace for the Bevy Jam 5, but we'll see how far along we get. I make no promises.
+My workspace for the [Bevy Jam 5](https://itch.io/jam/bevy-jam-5), but we'll see how far along we get. I make no promises.
 
 ## Goals
 - To make a simple game
