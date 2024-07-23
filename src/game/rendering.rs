@@ -25,7 +25,7 @@ fn render_orbits(
 ) {
     painter.thickness = 0.5;
     painter.hollow = true;
-    painter.set_color(Color::srgb(1.0, 1.0, 1.0));
+    painter.set_color(Color::srgb(0.5, 0.5, 0.5));
     painter.cap = Cap::None;
 
     for (_, orbital_position, satellite_properties) in &planet_query {

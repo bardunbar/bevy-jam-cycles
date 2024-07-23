@@ -1,6 +1,6 @@
 use bevy::{color::palettes::css::WHITE, prelude::*};
 
-use crate::screen::Screen;
+use crate::{game::interaction::SatelliteInteraction, screen::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_planets);
@@ -42,6 +42,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             color: Color::Srgba(WHITE),
         },
         StateScoped(Screen::Playing),
+        SatelliteInteraction::default(),
         OrbitalMovement { speed: 0.2 },
         OrbitalPosition {
             position: 1.23,
@@ -57,6 +58,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             color: Color::Srgba(WHITE),
         },
         StateScoped(Screen::Playing),
+        SatelliteInteraction::default(),
         OrbitalMovement { speed: 0.1 },
         OrbitalPosition {
             position: 4.22,
@@ -72,6 +74,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             color: Color::Srgba(WHITE),
         },
         StateScoped(Screen::Playing),
+        SatelliteInteraction::default(),
         OrbitalMovement { speed: 0.07 },
         OrbitalPosition {
             position: 5.22,
@@ -87,10 +90,43 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             color: Color::Srgba(WHITE),
         },
         StateScoped(Screen::Playing),
+        SatelliteInteraction::default(),
         OrbitalMovement { speed: 0.05 },
         OrbitalPosition {
             position: 0.3,
             radius: 256.0,
+        },
+    ));
+
+    commands.spawn((
+        Name::new("Planet"),
+        Planet,
+        PlanetProperties {
+            radius: 3.0,
+            color: Color::Srgba(WHITE),
+        },
+        StateScoped(Screen::Playing),
+        SatelliteInteraction::default(),
+        OrbitalMovement { speed: 0.025 },
+        OrbitalPosition {
+            position: 5.4,
+            radius: 300.0,
+        },
+    ));
+
+    commands.spawn((
+        Name::new("Planet"),
+        Planet,
+        PlanetProperties {
+            radius: 3.0,
+            color: Color::Srgba(WHITE),
+        },
+        StateScoped(Screen::Playing),
+        SatelliteInteraction::default(),
+        OrbitalMovement { speed: 0.02 },
+        OrbitalPosition {
+            position: 5.5,
+            radius: 336.0,
         },
     ));
 }

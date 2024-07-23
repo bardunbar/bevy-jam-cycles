@@ -52,6 +52,8 @@ I've added [Bevy Vector Shapes](https://github.com/james-j-obrien/bevy_vector_sh
 
 I now have the ability to add any number of planets with configurable radii and orbital speeds. Right now all orbits are perfectly circular and for the jam that is not going to change. It would be nice to one day have odd elliptical orbits to mix things up, but for now we will keep things simple.
 
-## 7/23/24 - Planets and interaction
+## 7/23/24 - Planets And Interaction
 
 There is now simple planet rendering and an automatic calculation of the arc length for the orbit around the planet. A system to handle getting the mouse position is implemented but nothing yet uses it. Soon that will be used to see if a planet has been clicked on!
+
+I looked at how buttons work from the UI system to understand one of the options for doing interactions in a more ECS way than I was originally attempting and it is starting to make sense. Now I have a SatelliteInteraction component that makes it easy to respond to changes in state. For now I just change colors when planets are hovered or pressed with the mouse.
