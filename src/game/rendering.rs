@@ -11,10 +11,18 @@ use crate::AppSet;
 use super::spawn::planet::{OrbitalPosition, Planet, PlanetProperties};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(Update, (render_orbits, render_satellites).chain().in_set(AppSet::Render));
+    app.add_systems(
+        Update,
+        (render_orbits, render_satellites)
+            .chain()
+            .in_set(AppSet::Render),
+    );
 }
 
-fn render_orbits(mut painter: ShapePainter, planet_query: Query<(&Planet, &OrbitalPosition, &PlanetProperties)>) {
+fn render_orbits(
+    mut painter: ShapePainter,
+    planet_query: Query<(&Planet, &OrbitalPosition, &PlanetProperties)>,
+) {
     painter.thickness = 0.5;
     painter.hollow = true;
     painter.set_color(Color::srgb(1.0, 1.0, 1.0));
@@ -31,7 +39,10 @@ fn render_orbits(mut painter: ShapePainter, planet_query: Query<(&Planet, &Orbit
     }
 }
 
-fn render_satellites(mut painter: ShapePainter, planet_query: Query<(&Planet, &OrbitalPosition, &PlanetProperties)>) {
+fn render_satellites(
+    mut painter: ShapePainter,
+    planet_query: Query<(&Planet, &OrbitalPosition, &PlanetProperties)>,
+) {
     painter.hollow = false;
 
     for (_, orbital_position, satellite_properties) in &planet_query {
