@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{color::palettes::css::WHITE, prelude::*};
 
 use crate::screen::Screen;
 
@@ -26,10 +26,21 @@ pub struct OrbitalMovement {
     pub speed: f32,
 }
 
+#[derive(Component, Reflect, Default)]
+#[reflect(Component)]
+pub struct PlanetProperties {
+    pub radius: f32,
+    pub color: Color,
+}
+
 fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
     commands.spawn((
         Name::new("Planet"),
         Planet,
+        PlanetProperties {
+            radius: 4.0,
+            color: Color::Srgba(WHITE),
+        },
         StateScoped(Screen::Playing),
         OrbitalMovement { speed: 0.2 },
         OrbitalPosition {
@@ -41,6 +52,10 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
     commands.spawn((
         Name::new("Planet"),
         Planet,
+        PlanetProperties {
+            radius: 8.0,
+            color: Color::Srgba(WHITE),
+        },
         StateScoped(Screen::Playing),
         OrbitalMovement { speed: 0.1 },
         OrbitalPosition {
@@ -52,6 +67,25 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
     commands.spawn((
         Name::new("Planet"),
         Planet,
+        PlanetProperties {
+            radius: 18.0,
+            color: Color::Srgba(WHITE),
+        },
+        StateScoped(Screen::Playing),
+        OrbitalMovement { speed: 0.07 },
+        OrbitalPosition {
+            position: 5.22,
+            radius: 200.0,
+        },
+    ));
+
+    commands.spawn((
+        Name::new("Planet"),
+        Planet,
+        PlanetProperties {
+            radius: 12.0,
+            color: Color::Srgba(WHITE),
+        },
         StateScoped(Screen::Playing),
         OrbitalMovement { speed: 0.05 },
         OrbitalPosition {

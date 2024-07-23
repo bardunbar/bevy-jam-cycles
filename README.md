@@ -51,3 +51,7 @@ The first step is to make the board. I am going to set up a simple planetary sys
 I've added [Bevy Vector Shapes](https://github.com/james-j-obrien/bevy_vector_shapes) to the project and used it to draw a simple sun and some basic orbitals. I also have begun removing demo code that is of no use to me and replacing it with my own components. Its taking a bit of work to remember how Bevy likes to do its components and queries but I can already tell that Bevy 0.14 is much improved over Bevy 0.10.
 
 I now have the ability to add any number of planets with configurable radii and orbital speeds. Right now all orbits are perfectly circular and for the jam that is not going to change. It would be nice to one day have odd elliptical orbits to mix things up, but for now we will keep things simple.
+
+## 7/23/24 - Planets and interaction
+
+There is now simple planet rendering and an automatic calculation of the arc length for the orbit around the planet. A system to handle getting the mouse position is implemented but nothing yet uses it. Soon that will be used to see if a planet has been clicked on!
