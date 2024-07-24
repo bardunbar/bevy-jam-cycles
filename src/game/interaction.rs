@@ -6,7 +6,11 @@ use bevy::{
 
 use crate::AppSet;
 
-use super::spawn::planet::{OrbitalPosition, PlanetProperties};
+use super::{
+    assets::SfxKey,
+    audio::sfx::PlaySfx,
+    spawn::planet::{OrbitalPosition, SatelliteProperties},
+};
 
 #[derive(Resource, Default)]
 pub struct MousePosition(Vec2);
@@ -32,7 +36,10 @@ impl SatelliteInteraction {
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<MousePosition>();
     app.add_systems(Update, process_mouse.in_set(AppSet::RecordInput));
-    app.add_systems(Update, handle_interaction.in_set(AppSet::Update));
+    app.add_systems(
+        Update,
+        (handle_interaction, play_interaction_sfx).in_set(AppSet::Update),
+    );
 }
 
 fn process_mouse(
@@ -42,7 +49,7 @@ fn process_mouse(
     camera_query: Query<(&Camera, &GlobalTransform), With<IsDefaultUiCamera>>,
     mut interaction_query: Query<(
         &OrbitalPosition,
-        &PlanetProperties,
+        &SatelliteProperties,
         &mut SatelliteInteraction,
     )>,
 ) {
@@ -70,22 +77,18 @@ fn process_mouse(
                 if *satellite_interaction != SatelliteInteraction::Pressed {
                     *satellite_interaction = SatelliteInteraction::Pressed;
                 }
-            } else {
-                if *satellite_interaction != SatelliteInteraction::Hovered {
-                    *satellite_interaction = SatelliteInteraction::Hovered;
-                }
+            } else if *satellite_interaction != SatelliteInteraction::Hovered {
+                *satellite_interaction = SatelliteInteraction::Hovered;
             }
-        } else {
-            if *satellite_interaction != SatelliteInteraction::None {
-                *satellite_interaction = SatelliteInteraction::None;
-            }
+        } else if *satellite_interaction != SatelliteInteraction::None {
+            *satellite_interaction = SatelliteInteraction::None;
         }
     }
 }
 
 fn handle_interaction(
     mut planet_query: Query<
-        (&mut PlanetProperties, &SatelliteInteraction),
+        (&mut SatelliteProperties, &SatelliteInteraction),
         Changed<SatelliteInteraction>,
     >,
 ) {
@@ -95,5 +98,18 @@ fn handle_interaction(
             SatelliteInteraction::Hovered => Color::Srgba(DARK_RED),
             SatelliteInteraction::None => Color::Srgba(WHITE),
         };
+    }
+}
+
+fn play_interaction_sfx(
+    mut commands: Commands,
+    planet_query: Query<&SatelliteInteraction, Changed<SatelliteInteraction>>,
+) {
+    for satllite_interaction in &planet_query {
+        match satllite_interaction {
+            SatelliteInteraction::Hovered => commands.trigger(PlaySfx::Key(SfxKey::ButtonHover)),
+            SatelliteInteraction::Pressed => commands.trigger(PlaySfx::Key(SfxKey::ButtonPress)),
+            _ => (),
+        }
     }
 }

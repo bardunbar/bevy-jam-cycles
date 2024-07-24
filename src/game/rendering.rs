@@ -8,7 +8,7 @@ use bevy_vector_shapes::{
 
 use crate::AppSet;
 
-use super::spawn::planet::{OrbitalPosition, Planet, PlanetProperties};
+use super::spawn::planet::{OrbitalPosition, Planet, SatelliteProperties};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -21,7 +21,7 @@ pub(super) fn plugin(app: &mut App) {
 
 fn render_orbits(
     mut painter: ShapePainter,
-    planet_query: Query<(&Planet, &OrbitalPosition, &PlanetProperties)>,
+    planet_query: Query<(&Planet, &OrbitalPosition, &SatelliteProperties)>,
 ) {
     painter.thickness = 0.5;
     painter.hollow = true;
@@ -41,7 +41,7 @@ fn render_orbits(
 
 fn render_satellites(
     mut painter: ShapePainter,
-    planet_query: Query<(&Planet, &OrbitalPosition, &PlanetProperties)>,
+    planet_query: Query<(&Planet, &OrbitalPosition, &SatelliteProperties)>,
 ) {
     painter.hollow = false;
 

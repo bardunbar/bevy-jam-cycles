@@ -28,7 +28,7 @@ pub struct OrbitalMovement {
 
 #[derive(Component, Reflect, Default)]
 #[reflect(Component)]
-pub struct PlanetProperties {
+pub struct SatelliteProperties {
     pub radius: f32,
     pub color: Color,
 }
@@ -37,7 +37,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
     commands.spawn((
         Name::new("Planet"),
         Planet,
-        PlanetProperties {
+        SatelliteProperties {
             radius: 4.0,
             color: Color::Srgba(WHITE),
         },
@@ -53,7 +53,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
     commands.spawn((
         Name::new("Planet"),
         Planet,
-        PlanetProperties {
+        SatelliteProperties {
             radius: 8.0,
             color: Color::Srgba(WHITE),
         },
@@ -69,7 +69,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
     commands.spawn((
         Name::new("Planet"),
         Planet,
-        PlanetProperties {
+        SatelliteProperties {
             radius: 18.0,
             color: Color::Srgba(WHITE),
         },
@@ -85,7 +85,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
     commands.spawn((
         Name::new("Planet"),
         Planet,
-        PlanetProperties {
+        SatelliteProperties {
             radius: 12.0,
             color: Color::Srgba(WHITE),
         },
@@ -101,7 +101,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
     commands.spawn((
         Name::new("Planet"),
         Planet,
-        PlanetProperties {
+        SatelliteProperties {
             radius: 3.0,
             color: Color::Srgba(WHITE),
         },
@@ -117,7 +117,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
     commands.spawn((
         Name::new("Planet"),
         Planet,
-        PlanetProperties {
+        SatelliteProperties {
             radius: 3.0,
             color: Color::Srgba(WHITE),
         },
