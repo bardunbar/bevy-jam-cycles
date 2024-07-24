@@ -9,11 +9,20 @@ use crate::AppSet;
 use super::{
     assets::SfxKey,
     audio::sfx::PlaySfx,
-    spawn::planet::{OrbitalPosition, SatelliteProperties},
+    spawn::{
+        connection::InitiateConnection,
+        planet::{OrbitalPosition, SatelliteProperties},
+    },
 };
 
 #[derive(Resource, Default)]
 pub struct MousePosition(Vec2);
+
+impl MousePosition {
+    pub fn get_pos_3d(&self) -> Vec3 {
+        Vec3::new(self.0.x, self.0.y, 0.0)
+    }
+}
 
 #[derive(Component, Copy, Clone, Eq, PartialEq, Debug, Reflect)]
 #[reflect(Component, Default, PartialEq)]
@@ -38,7 +47,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, process_mouse.in_set(AppSet::RecordInput));
     app.add_systems(
         Update,
-        (handle_interaction, play_interaction_sfx).in_set(AppSet::Update),
+        (handle_interaction, play_interaction_sfx, spawn_connections).in_set(AppSet::Update),
     );
 }
 
@@ -110,6 +119,17 @@ fn play_interaction_sfx(
             SatelliteInteraction::Hovered => commands.trigger(PlaySfx::Key(SfxKey::ButtonHover)),
             SatelliteInteraction::Pressed => commands.trigger(PlaySfx::Key(SfxKey::ButtonPress)),
             _ => (),
+        }
+    }
+}
+
+fn spawn_connections(
+    mut commands: Commands,
+    query: Query<(Entity, &SatelliteInteraction), Changed<SatelliteInteraction>>,
+) {
+    for (entity, interaction) in &query {
+        if *interaction == SatelliteInteraction::Pressed {
+            commands.trigger(InitiateConnection(entity));
         }
     }
 }

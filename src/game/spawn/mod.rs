@@ -4,10 +4,16 @@
 
 use bevy::prelude::*;
 
+pub mod connection;
 pub mod level;
 pub mod planet;
 pub mod player;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((level::plugin, player::plugin, planet::plugin));
+    app.add_plugins((
+        level::plugin,
+        player::plugin,
+        planet::plugin,
+        connection::plugin,
+    ));
 }

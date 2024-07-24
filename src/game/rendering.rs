@@ -1,19 +1,22 @@
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
+use bevy::{color::palettes::css::WHITE, prelude::*};
 use bevy_vector_shapes::{
     prelude::ShapePainter,
-    shapes::{Cap, DiscPainter},
+    shapes::{Cap, DiscPainter, LinePainter},
 };
 
 use crate::AppSet;
 
-use super::spawn::planet::{OrbitalPosition, Planet, SatelliteProperties};
+use super::spawn::{
+    connection::{ConnectionAnchor, ConnectionTarget},
+    planet::{OrbitalPosition, Planet, SatelliteProperties},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (render_orbits, render_satellites)
+        (render_orbits, render_satellites, render_connections)
             .chain()
             .in_set(AppSet::Render),
     );
@@ -57,4 +60,30 @@ fn render_satellites(
     }
 
     painter.set_translation(Vec3::ZERO);
+}
+
+fn render_connections(
+    mut painter: ShapePainter,
+    connection_query: Query<(&ConnectionAnchor, &ConnectionTarget)>,
+    planet_query: Query<(&Planet, &OrbitalPosition, &SatelliteProperties)>,
+) {
+    painter.thickness = 0.5;
+    painter.set_color(Color::Srgba(WHITE));
+
+    for (connection_anchor, connection_target) in &connection_query {
+        if let Ok((_, orbital_position, _properties)) =
+            planet_query.get(connection_anchor.satellite)
+        {
+            let mut start = Vec3::Y * orbital_position.radius;
+            let rotation = Quat::from_rotation_z(-orbital_position.position);
+            start = rotation * start;
+
+            let end = match connection_target {
+                ConnectionTarget::Satellite(_) => Vec3::ZERO,
+                ConnectionTarget::Position(pos) => *pos,
+            };
+
+            painter.line(start, end);
+        };
+    }
 }

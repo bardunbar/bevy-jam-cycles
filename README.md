@@ -57,3 +57,9 @@ I now have the ability to add any number of planets with configurable radii and 
 There is now simple planet rendering and an automatic calculation of the arc length for the orbit around the planet. A system to handle getting the mouse position is implemented but nothing yet uses it. Soon that will be used to see if a planet has been clicked on!
 
 I looked at how buttons work from the UI system to understand one of the options for doing interactions in a more ECS way than I was originally attempting and it is starting to make sense. Now I have a SatelliteInteraction component that makes it easy to respond to changes in state. For now I just change colors when planets are hovered or pressed with the mouse.
+
+## 7/24/24 - What Happens When You Click?
+
+Using the framework set up last time I was easily able to add a listener to handle interaction sounds made by the planets. With that out of the way I next want to look at the next core element of the game, establishing connections between planets.
+
+Its definitely taking a bit of getting used to, but I am coming around on the whole ECS thing. I still think it is a bit silly for implementing gameplay logic, but I do appreciate how contained everything is. Leaving things tonight partially complete, I have added a new Connection entity that is created when you click on a planet and is updated whenever the mouse moves.
