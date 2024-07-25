@@ -10,7 +10,9 @@ use super::{
     assets::SfxKey,
     audio::sfx::PlaySfx,
     spawn::{
-        connection::InitiateConnection,
+        connection::{
+            ConnectionAnchor, ConnectionTarget, ConnectionUnderConstruction, InitiateConnection,
+        },
         planet::{OrbitalPosition, SatelliteProperties},
     },
 };
@@ -125,11 +127,26 @@ fn play_interaction_sfx(
 
 fn spawn_connections(
     mut commands: Commands,
-    query: Query<(Entity, &SatelliteInteraction), Changed<SatelliteInteraction>>,
+    mut connection_query: Query<
+        (Entity, &mut ConnectionTarget, &ConnectionAnchor),
+        With<ConnectionUnderConstruction>,
+    >,
+    satellite_query: Query<(Entity, &SatelliteInteraction), Changed<SatelliteInteraction>>,
 ) {
-    for (entity, interaction) in &query {
+    for (entity, interaction) in &satellite_query {
         if *interaction == SatelliteInteraction::Pressed {
-            commands.trigger(InitiateConnection(entity));
+            if connection_query.is_empty() {
+                commands.trigger(InitiateConnection(entity));
+            } else if let Ok((connection, mut target, anchor)) = connection_query.get_single_mut() {
+                if anchor.satellite == entity {
+                    commands.entity(entity).despawn();
+                } else {
+                    *target = ConnectionTarget::Satellite(entity);
+                    commands
+                        .entity(connection)
+                        .remove::<ConnectionUnderConstruction>();
+                }
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{color::palettes::css::WHITE, prelude::*};
+use bevy::{color::palettes::css::WHITE, ecs::query::QueryEntityError, prelude::*};
 use bevy_vector_shapes::{
     prelude::ShapePainter,
     shapes::{Cap, DiscPainter, LinePainter},
@@ -70,20 +70,29 @@ fn render_connections(
     painter.thickness = 0.5;
     painter.set_color(Color::Srgba(WHITE));
 
-    for (connection_anchor, connection_target) in &connection_query {
-        if let Ok((_, orbital_position, _properties)) =
-            planet_query.get(connection_anchor.satellite)
-        {
-            let mut start = Vec3::Y * orbital_position.radius;
-            let rotation = Quat::from_rotation_z(-orbital_position.position);
-            start = rotation * start;
+    fn get_position_from_planet(
+        entity: Entity,
+        planet_query: &Query<(&Planet, &OrbitalPosition, &SatelliteProperties)>,
+    ) -> Result<Vec3, QueryEntityError> {
+        let (_, orbital_position, _properties) = planet_query.get(entity)?;
+        let start = Vec3::Y * orbital_position.radius;
+        let rotation = Quat::from_rotation_z(-orbital_position.position);
+        Ok(rotation * start)
+    }
 
+    for (connection_anchor, connection_target) in &connection_query {
+        if let Ok(start) = get_position_from_planet(connection_anchor.satellite, &planet_query) {
             let end = match connection_target {
-                ConnectionTarget::Satellite(_) => Vec3::ZERO,
+                ConnectionTarget::Satellite(target) => {
+                    match get_position_from_planet(*target, &planet_query) {
+                        Ok(pos) => pos,
+                        Err(_) => Vec3::ZERO,
+                    }
+                }
                 ConnectionTarget::Position(pos) => *pos,
             };
 
             painter.line(start, end);
-        };
+        }
     }
 }
