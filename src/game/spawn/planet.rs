@@ -1,6 +1,6 @@
 use bevy::{color::palettes::css::WHITE, prelude::*};
 
-use crate::{game::interaction::SatelliteInteraction, screen::Screen};
+use crate::{game::interaction::InteractionState, screen::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_planets);
@@ -42,7 +42,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             color: Color::Srgba(WHITE),
         },
         StateScoped(Screen::Playing),
-        SatelliteInteraction::default(),
+        InteractionState::default(),
         OrbitalMovement { speed: 0.2 },
         OrbitalPosition {
             position: 1.23,
@@ -58,7 +58,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             color: Color::Srgba(WHITE),
         },
         StateScoped(Screen::Playing),
-        SatelliteInteraction::default(),
+        InteractionState::default(),
         OrbitalMovement { speed: 0.1 },
         OrbitalPosition {
             position: 4.22,
@@ -74,7 +74,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             color: Color::Srgba(WHITE),
         },
         StateScoped(Screen::Playing),
-        SatelliteInteraction::default(),
+        InteractionState::default(),
         OrbitalMovement { speed: 0.07 },
         OrbitalPosition {
             position: 5.22,
@@ -90,7 +90,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             color: Color::Srgba(WHITE),
         },
         StateScoped(Screen::Playing),
-        SatelliteInteraction::default(),
+        InteractionState::default(),
         OrbitalMovement { speed: 0.05 },
         OrbitalPosition {
             position: 0.3,
@@ -106,7 +106,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             color: Color::Srgba(WHITE),
         },
         StateScoped(Screen::Playing),
-        SatelliteInteraction::default(),
+        InteractionState::default(),
         OrbitalMovement { speed: 0.025 },
         OrbitalPosition {
             position: 5.4,
@@ -122,7 +122,7 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             color: Color::Srgba(WHITE),
         },
         StateScoped(Screen::Playing),
-        SatelliteInteraction::default(),
+        InteractionState::default(),
         OrbitalMovement { speed: 0.02 },
         OrbitalPosition {
             position: 5.5,

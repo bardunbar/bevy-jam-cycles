@@ -28,19 +28,19 @@ impl MousePosition {
 
 #[derive(Component, Copy, Clone, Eq, PartialEq, Debug, Reflect)]
 #[reflect(Component, Default, PartialEq)]
-pub enum SatelliteInteraction {
+pub enum InteractionState {
     Pressed,
     Hovered,
     None,
 }
 
-impl Default for SatelliteInteraction {
+impl Default for InteractionState {
     fn default() -> Self {
         Self::DEFAULT
     }
 }
 
-impl SatelliteInteraction {
+impl InteractionState {
     const DEFAULT: Self = Self::None;
 }
 
@@ -61,8 +61,13 @@ fn process_mouse(
     mut interaction_query: Query<(
         &OrbitalPosition,
         &SatelliteProperties,
-        &mut SatelliteInteraction,
+        &mut InteractionState,
     )>,
+    // mut connection_interaction_query: Query<(
+    //     &ConnectionAnchor,
+    //     &ConnectionTarget,
+    //     &mut InteractionState,
+    // ), Without<ConnectionUnderConstruction>>
 ) {
     let (camera, camera_transform) = camera_query.single();
     let window = window_query.single();
@@ -85,41 +90,46 @@ fn process_mouse(
         let delta = mouse_position.0 - position.xy();
         if delta.length_squared() < (effective_radius * effective_radius) {
             if mouse_button.pressed(MouseButton::Left) {
-                if *satellite_interaction != SatelliteInteraction::Pressed {
-                    *satellite_interaction = SatelliteInteraction::Pressed;
+                if *satellite_interaction != InteractionState::Pressed {
+                    *satellite_interaction = InteractionState::Pressed;
                 }
-            } else if *satellite_interaction != SatelliteInteraction::Hovered {
-                *satellite_interaction = SatelliteInteraction::Hovered;
+            } else if *satellite_interaction != InteractionState::Hovered {
+                *satellite_interaction = InteractionState::Hovered;
             }
-        } else if *satellite_interaction != SatelliteInteraction::None {
-            *satellite_interaction = SatelliteInteraction::None;
+        } else if *satellite_interaction != InteractionState::None {
+            *satellite_interaction = InteractionState::None;
         }
     }
+
+    // for (connection_anchor, connection_target, interaction) in &mut connection_interaction_query {
+    //     // Get the endpoints of the line and check to see if the mouse is within a certain distance from the line
+
+    // }
 }
 
 fn handle_interaction(
     mut planet_query: Query<
-        (&mut SatelliteProperties, &SatelliteInteraction),
-        Changed<SatelliteInteraction>,
+        (&mut SatelliteProperties, &InteractionState),
+        Changed<InteractionState>,
     >,
 ) {
     for (mut satellite_properties, interaction) in &mut planet_query {
         satellite_properties.color = match interaction {
-            SatelliteInteraction::Pressed => Color::Srgba(RED),
-            SatelliteInteraction::Hovered => Color::Srgba(DARK_RED),
-            SatelliteInteraction::None => Color::Srgba(WHITE),
+            InteractionState::Pressed => Color::Srgba(RED),
+            InteractionState::Hovered => Color::Srgba(DARK_RED),
+            InteractionState::None => Color::Srgba(WHITE),
         };
     }
 }
 
 fn play_interaction_sfx(
     mut commands: Commands,
-    planet_query: Query<&SatelliteInteraction, Changed<SatelliteInteraction>>,
+    planet_query: Query<&InteractionState, Changed<InteractionState>>,
 ) {
     for satllite_interaction in &planet_query {
         match satllite_interaction {
-            SatelliteInteraction::Hovered => commands.trigger(PlaySfx::Key(SfxKey::ButtonHover)),
-            SatelliteInteraction::Pressed => commands.trigger(PlaySfx::Key(SfxKey::ButtonPress)),
+            InteractionState::Hovered => commands.trigger(PlaySfx::Key(SfxKey::ButtonHover)),
+            InteractionState::Pressed => commands.trigger(PlaySfx::Key(SfxKey::ButtonPress)),
             _ => (),
         }
     }
@@ -131,15 +141,15 @@ fn spawn_connections(
         (Entity, &mut ConnectionTarget, &ConnectionAnchor),
         With<ConnectionUnderConstruction>,
     >,
-    satellite_query: Query<(Entity, &SatelliteInteraction), Changed<SatelliteInteraction>>,
+    satellite_query: Query<(Entity, &InteractionState), Changed<InteractionState>>,
 ) {
     for (entity, interaction) in &satellite_query {
-        if *interaction == SatelliteInteraction::Pressed {
+        if *interaction == InteractionState::Pressed {
             if connection_query.is_empty() {
                 commands.trigger(InitiateConnection(entity));
             } else if let Ok((connection, mut target, anchor)) = connection_query.get_single_mut() {
                 if anchor.satellite == entity {
-                    commands.entity(entity).despawn();
+                    commands.entity(connection).despawn();
                 } else {
                     *target = ConnectionTarget::Satellite(entity);
                     commands

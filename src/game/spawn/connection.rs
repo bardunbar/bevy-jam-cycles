@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::interaction::MousePosition;
+use crate::game::interaction::{InteractionState, MousePosition};
 
 #[derive(Event, Debug)]
 pub struct InitiateConnection(pub Entity);
@@ -42,6 +42,7 @@ fn initiate_connection(
         },
         ConnectionTarget::Position(mouse_pos.get_pos_3d()),
         ConnectionUnderConstruction,
+        InteractionState::default(),
     ));
 }
 
