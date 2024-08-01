@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{color::palettes::css::WHITE, prelude::*};
 
 use crate::game::interaction::{InteractionState, MousePosition};
 
@@ -16,6 +16,12 @@ pub struct ConnectionAnchor {
 pub enum ConnectionTarget {
     Satellite(Entity),
     Position(Vec3),
+}
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct ConnectionProperties {
+    pub color: Color,
 }
 
 #[derive(Component, Reflect)]
@@ -41,6 +47,9 @@ fn initiate_connection(
             satellite: trigger.event().0,
         },
         ConnectionTarget::Position(mouse_pos.get_pos_3d()),
+        ConnectionProperties {
+            color: Color::Srgba(WHITE),
+        },
         ConnectionUnderConstruction,
         InteractionState::default(),
     ));

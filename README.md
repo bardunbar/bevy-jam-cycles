@@ -63,3 +63,8 @@ I looked at how buttons work from the UI system to understand one of the options
 Using the framework set up last time I was easily able to add a listener to handle interaction sounds made by the planets. With that out of the way I next want to look at the next core element of the game, establishing connections between planets.
 
 Its definitely taking a bit of getting used to, but I am coming around on the whole ECS thing. I still think it is a bit silly for implementing gameplay logic, but I do appreciate how contained everything is. Leaving things tonight partially complete, I have added a new Connection entity that is created when you click on a planet and is updated whenever the mouse moves.
+
+## 8/1/24 - Well No Surprise...
+No surprises here but I did not manage to submit this to the bevy jam 5. Thats okay though because my next goal is the august game makers meetup. I am still hoping to get something rather simple working for that and with an hour or so each night I think this should be achievable.
+
+Today I made it so that you could interact with connections and clicking on them will remove them. I had a small lesson in reusing components without updating previous systems which led to an interesting bug that was causing connections to be constructed in a funny way, but it was relatively simple to track down. Just needed to make sure the system was only running on planets and not anything with an interaction component.

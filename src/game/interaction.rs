@@ -11,7 +11,8 @@ use super::{
     audio::sfx::PlaySfx,
     spawn::{
         connection::{
-            ConnectionAnchor, ConnectionTarget, ConnectionUnderConstruction, InitiateConnection,
+            ConnectionAnchor, ConnectionProperties, ConnectionTarget, ConnectionUnderConstruction,
+            InitiateConnection,
         },
         planet::{OrbitalPosition, SatelliteProperties},
     },
@@ -46,45 +47,41 @@ impl InteractionState {
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<MousePosition>();
-    app.add_systems(Update, process_mouse.in_set(AppSet::RecordInput));
     app.add_systems(
         Update,
-        (handle_interaction, play_interaction_sfx, spawn_connections).in_set(AppSet::Update),
+        (
+            process_mouse,
+            process_satellite_interactions,
+            process_connection_interactions,
+        )
+            .chain()
+            .in_set(AppSet::RecordInput),
+    );
+    app.add_systems(
+        Update,
+        (
+            handle_interaction,
+            play_interaction_sfx,
+            spawn_connections,
+            remove_connections,
+        )
+            .in_set(AppSet::Update),
     );
 }
 
-fn process_mouse(
-    mut mouse_position: ResMut<MousePosition>,
+fn process_satellite_interactions(
+    mouse_position: Res<MousePosition>,
     mouse_button: Res<ButtonInput<MouseButton>>,
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    camera_query: Query<(&Camera, &GlobalTransform), With<IsDefaultUiCamera>>,
     mut interaction_query: Query<(
         &OrbitalPosition,
         &SatelliteProperties,
         &mut InteractionState,
     )>,
-    // mut connection_interaction_query: Query<(
-    //     &ConnectionAnchor,
-    //     &ConnectionTarget,
-    //     &mut InteractionState,
-    // ), Without<ConnectionUnderConstruction>>
 ) {
-    let (camera, camera_transform) = camera_query.single();
-    let window = window_query.single();
-
-    if let Some(world_position) = window
-        .cursor_position()
-        .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
-    {
-        mouse_position.0 = world_position;
-    }
-
     for (orbital_position, satellite_properties, mut satellite_interaction) in
         &mut interaction_query
     {
-        let mut position = Vec3::Y * orbital_position.radius;
-        let rotation = Quat::from_rotation_z(-orbital_position.position);
-        position = rotation * position;
+        let position = orbital_position.get_euclidean_position();
 
         let effective_radius = satellite_properties.radius + 10.0;
         let delta = mouse_position.0 - position.xy();
@@ -100,11 +97,63 @@ fn process_mouse(
             *satellite_interaction = InteractionState::None;
         }
     }
+}
 
-    // for (connection_anchor, connection_target, interaction) in &mut connection_interaction_query {
-    //     // Get the endpoints of the line and check to see if the mouse is within a certain distance from the line
+fn process_connection_interactions(
+    mouse_position: Res<MousePosition>,
+    mouse_button: Res<ButtonInput<MouseButton>>,
+    satellite_query: Query<(&OrbitalPosition, &SatelliteProperties)>,
+    mut interaction_query: Query<
+        (&ConnectionAnchor, &ConnectionTarget, &mut InteractionState),
+        Without<ConnectionUnderConstruction>,
+    >,
+) {
+    for (connection_anchor, connection_target, mut interaction) in &mut interaction_query {
+        // Get the endpoints of the line and check to see if the mouse is within a certain distance from the line
+        if let Ok((anchor_position, _)) = satellite_query.get(connection_anchor.satellite) {
+            if let ConnectionTarget::Satellite(target) = connection_target {
+                if let Ok((target_position, _)) = satellite_query.get(*target) {
+                    let start = anchor_position.get_euclidean_position().xy();
+                    let end = target_position.get_euclidean_position().xy();
+                    let mouse = mouse_position.0;
 
-    // }
+                    let line = end - start;
+                    let p = mouse - start;
+
+                    let h = (p.dot(line) / line.dot(line)).clamp(0.3, 0.7);
+                    let dist = (p - line * h).length_squared();
+
+                    if dist < (10.0 * 10.0) {
+                        if mouse_button.pressed(MouseButton::Left) {
+                            if *interaction != InteractionState::Pressed {
+                                *interaction = InteractionState::Pressed;
+                            }
+                        } else if *interaction != InteractionState::Hovered {
+                            *interaction = InteractionState::Hovered;
+                        }
+                    } else if *interaction != InteractionState::None {
+                        *interaction = InteractionState::None;
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn process_mouse(
+    mut mouse_position: ResMut<MousePosition>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<IsDefaultUiCamera>>,
+) {
+    let (camera, camera_transform) = camera_query.single();
+    let window = window_query.single();
+
+    if let Some(world_position) = window
+        .cursor_position()
+        .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
+    {
+        mouse_position.0 = world_position;
+    }
 }
 
 fn handle_interaction(
@@ -112,9 +161,21 @@ fn handle_interaction(
         (&mut SatelliteProperties, &InteractionState),
         Changed<InteractionState>,
     >,
+    mut connection_query: Query<
+        (&mut ConnectionProperties, &InteractionState),
+        Changed<InteractionState>,
+    >,
 ) {
     for (mut satellite_properties, interaction) in &mut planet_query {
         satellite_properties.color = match interaction {
+            InteractionState::Pressed => Color::Srgba(RED),
+            InteractionState::Hovered => Color::Srgba(DARK_RED),
+            InteractionState::None => Color::Srgba(WHITE),
+        };
+    }
+
+    for (mut connection_properties, interaction) in &mut connection_query {
+        connection_properties.color = match interaction {
             InteractionState::Pressed => Color::Srgba(RED),
             InteractionState::Hovered => Color::Srgba(DARK_RED),
             InteractionState::None => Color::Srgba(WHITE),
@@ -141,7 +202,10 @@ fn spawn_connections(
         (Entity, &mut ConnectionTarget, &ConnectionAnchor),
         With<ConnectionUnderConstruction>,
     >,
-    satellite_query: Query<(Entity, &InteractionState), Changed<InteractionState>>,
+    satellite_query: Query<
+        (Entity, &InteractionState),
+        (With<SatelliteProperties>, Changed<InteractionState>),
+    >,
 ) {
     for (entity, interaction) in &satellite_query {
         if *interaction == InteractionState::Pressed {
@@ -157,6 +221,20 @@ fn spawn_connections(
                         .remove::<ConnectionUnderConstruction>();
                 }
             }
+        }
+    }
+}
+
+fn remove_connections(
+    mut commands: Commands,
+    connection_query: Query<
+        (Entity, &InteractionState),
+        (With<ConnectionProperties>, Changed<InteractionState>),
+    >,
+) {
+    for (entity, interaction) in &connection_query {
+        if *interaction == InteractionState::Pressed {
+            commands.entity(entity).despawn();
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{color::palettes::css::WHITE, ecs::query::QueryEntityError, prelude::*};
+use bevy::{ecs::query::QueryEntityError, prelude::*};
 use bevy_vector_shapes::{
     prelude::ShapePainter,
     shapes::{Cap, DiscPainter, LinePainter},
@@ -9,7 +9,7 @@ use bevy_vector_shapes::{
 use crate::AppSet;
 
 use super::spawn::{
-    connection::{ConnectionAnchor, ConnectionTarget},
+    connection::{ConnectionAnchor, ConnectionProperties, ConnectionTarget},
     planet::{OrbitalPosition, Planet, SatelliteProperties},
 };
 
@@ -49,10 +49,7 @@ fn render_satellites(
     painter.hollow = false;
 
     for (_, orbital_position, satellite_properties) in &planet_query {
-        let mut position = Vec3::Y * orbital_position.radius;
-        let rotation = Quat::from_rotation_z(-orbital_position.position);
-
-        position = rotation * position;
+        let position = orbital_position.get_euclidean_position();
 
         painter.set_translation(position);
         painter.set_color(satellite_properties.color);
@@ -64,11 +61,10 @@ fn render_satellites(
 
 fn render_connections(
     mut painter: ShapePainter,
-    connection_query: Query<(&ConnectionAnchor, &ConnectionTarget)>,
+    connection_query: Query<(&ConnectionAnchor, &ConnectionTarget, &ConnectionProperties)>,
     planet_query: Query<(&Planet, &OrbitalPosition, &SatelliteProperties)>,
 ) {
     painter.thickness = 0.5;
-    painter.set_color(Color::Srgba(WHITE));
 
     fn get_position_from_planet(
         entity: Entity,
@@ -80,7 +76,7 @@ fn render_connections(
         Ok(rotation * start)
     }
 
-    for (connection_anchor, connection_target) in &connection_query {
+    for (connection_anchor, connection_target, connection_properties) in &connection_query {
         if let Ok(start) = get_position_from_planet(connection_anchor.satellite, &planet_query) {
             let end = match connection_target {
                 ConnectionTarget::Satellite(target) => {
@@ -92,6 +88,7 @@ fn render_connections(
                 ConnectionTarget::Position(pos) => *pos,
             };
 
+            painter.set_color(connection_properties.color);
             painter.line(start, end);
         }
     }

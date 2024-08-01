@@ -20,6 +20,14 @@ pub struct OrbitalPosition {
     pub radius: f32,
 }
 
+impl OrbitalPosition {
+    pub fn get_euclidean_position(&self) -> Vec3 {
+        let position = Vec3::Y * self.radius;
+        let rotation = Quat::from_rotation_z(-self.position);
+        rotation * position
+    }
+}
+
 #[derive(Component, Reflect, Default)]
 #[reflect(Component)]
 pub struct OrbitalMovement {
