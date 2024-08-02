@@ -1,4 +1,7 @@
-use bevy::{color::palettes::css::WHITE, prelude::*};
+use bevy::{
+    color::palettes::css::{RED, WHITE},
+    prelude::*,
+};
 
 use crate::game::interaction::{InteractionState, MousePosition};
 
@@ -22,6 +25,18 @@ pub enum ConnectionTarget {
 #[reflect(Component)]
 pub struct ConnectionProperties {
     pub color: Color,
+    pub invalid_color: Color,
+    pub range: f32,
+}
+
+impl ConnectionProperties {
+    // pub fn is_valid_range(&self, range: f32) -> bool {
+    //     range <= self.range
+    // }
+
+    pub fn is_valid_range_sqr(&self, range_sqr: f32) -> bool {
+        range_sqr <= self.range * self.range
+    }
 }
 
 #[derive(Component, Reflect)]
@@ -49,6 +64,8 @@ fn initiate_connection(
         ConnectionTarget::Position(mouse_pos.get_pos_3d()),
         ConnectionProperties {
             color: Color::Srgba(WHITE),
+            invalid_color: Color::Srgba(RED),
+            range: 200.0,
         },
         ConnectionUnderConstruction,
         InteractionState::default(),

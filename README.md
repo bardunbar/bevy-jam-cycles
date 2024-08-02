@@ -68,3 +68,8 @@ Its definitely taking a bit of getting used to, but I am coming around on the wh
 No surprises here but I did not manage to submit this to the bevy jam 5. Thats okay though because my next goal is the august game makers meetup. I am still hoping to get something rather simple working for that and with an hour or so each night I think this should be achievable.
 
 Today I made it so that you could interact with connections and clicking on them will remove them. I had a small lesson in reusing components without updating previous systems which led to an interesting bug that was causing connections to be constructed in a funny way, but it was relatively simple to track down. Just needed to make sure the system was only running on planets and not anything with an interaction component.
+
+## 8/2/24 - Valid Connections
+Started working on connection validity and range mechanics. I added a range to the connection and drew a guide to display the extent of the current connection. Connections now render in red when they are too long. I am not yet done with preventing the establishing of connections that are too long, not automatically closing connections which grow to be too long. that is going to have to wait for another day. I want to start next on a simple system that will update active connections valid state, then we can have yet another system automatically clean up invalid connections. That should handle my need relatively cleanly.
+
+I must begrudgingly admit that bevy is starting to grow on me.

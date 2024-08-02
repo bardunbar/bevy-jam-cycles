@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{ecs::query::QueryEntityError, prelude::*};
+use bevy::{color::palettes::css::DARK_ORANGE, ecs::query::QueryEntityError, prelude::*};
 use bevy_vector_shapes::{
     prelude::ShapePainter,
     shapes::{Cap, DiscPainter, LinePainter},
@@ -9,14 +9,21 @@ use bevy_vector_shapes::{
 use crate::AppSet;
 
 use super::spawn::{
-    connection::{ConnectionAnchor, ConnectionProperties, ConnectionTarget},
+    connection::{
+        ConnectionAnchor, ConnectionProperties, ConnectionTarget, ConnectionUnderConstruction,
+    },
     planet::{OrbitalPosition, Planet, SatelliteProperties},
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (render_orbits, render_satellites, render_connections)
+        (
+            render_orbits,
+            render_satellites,
+            render_connections,
+            render_construction_range,
+        )
             .chain()
             .in_set(AppSet::Render),
     );
@@ -88,8 +95,35 @@ fn render_connections(
                 ConnectionTarget::Position(pos) => *pos,
             };
 
-            painter.set_color(connection_properties.color);
+            let color = if connection_properties.is_valid_range_sqr((end - start).length_squared())
+            {
+                connection_properties.color
+            } else {
+                connection_properties.invalid_color
+            };
+
+            painter.set_color(color);
             painter.line(start, end);
+        }
+    }
+}
+
+fn render_construction_range(
+    mut painter: ShapePainter,
+    construction_query: Query<
+        (&ConnectionAnchor, &ConnectionProperties),
+        With<ConnectionUnderConstruction>,
+    >,
+    planet_query: Query<&OrbitalPosition, With<Planet>>,
+) {
+    if let Ok((anchor, properties)) = construction_query.get_single() {
+        if let Ok(orbital_position) = planet_query.get(anchor.satellite) {
+            painter.thickness = 1.0;
+            painter.hollow = true;
+            painter.set_color(Color::Srgba(DARK_ORANGE));
+            painter.set_translation(orbital_position.get_euclidean_position());
+            painter.circle(properties.range);
+            painter.set_translation(Vec3::ZERO);
         }
     }
 }
