@@ -8,11 +8,15 @@ use bevy_vector_shapes::{
 
 use crate::AppSet;
 
-use super::spawn::{
-    connection::{
-        ConnectionAnchor, ConnectionProperties, ConnectionTarget, ConnectionUnderConstruction,
+use super::{
+    interaction::InteractionState,
+    spawn::{
+        connection::{
+            ConnectionAnchor, ConnectionConfig, ConnectionProperties, ConnectionTarget,
+            ConnectionUnderConstruction,
+        },
+        planet::{OrbitalPosition, Planet, SatelliteProperties},
     },
-    planet::{OrbitalPosition, Planet, SatelliteProperties},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -95,12 +99,11 @@ fn render_connections(
                 ConnectionTarget::Position(pos) => *pos,
             };
 
-            let color = if connection_properties.is_valid_range_sqr((end - start).length_squared())
-            {
-                connection_properties.color
-            } else {
-                connection_properties.invalid_color
-            };
+            let distance = (end - start).length();
+            let v = (distance - (connection_properties.range * 0.75))
+                .clamp(0.0, connection_properties.range * 0.25);
+            let nv = (v / (connection_properties.range * 0.25)).clamp(0.0, 1.0);
+            let color = Color::srgb(1.0, 1.0 - nv, 1.0 - nv);
 
             painter.set_color(color);
             painter.line(start, end);
@@ -110,20 +113,35 @@ fn render_connections(
 
 fn render_construction_range(
     mut painter: ShapePainter,
-    construction_query: Query<
-        (&ConnectionAnchor, &ConnectionProperties),
-        With<ConnectionUnderConstruction>,
-    >,
+    connection_config: Res<ConnectionConfig>,
+    construction_query: Query<&ConnectionAnchor, With<ConnectionUnderConstruction>>,
     planet_query: Query<&OrbitalPosition, With<Planet>>,
+    hover_planet_query: Query<(&OrbitalPosition, &InteractionState)>,
 ) {
-    if let Ok((anchor, properties)) = construction_query.get_single() {
+    if let Ok(anchor) = construction_query.get_single() {
         if let Ok(orbital_position) = planet_query.get(anchor.satellite) {
             painter.thickness = 1.0;
             painter.hollow = true;
             painter.set_color(Color::Srgba(DARK_ORANGE));
             painter.set_translation(orbital_position.get_euclidean_position());
-            painter.circle(properties.range);
+            painter.circle(connection_config.range);
             painter.set_translation(Vec3::ZERO);
+        }
+    }
+
+    if construction_query.is_empty() {
+        for (orbital_position, interaction) in &hover_planet_query {
+            match interaction {
+                InteractionState::Hovered => {
+                    painter.thickness = 1.0;
+                    painter.hollow = true;
+                    painter.set_color(Color::Srgba(DARK_ORANGE));
+                    painter.set_translation(orbital_position.get_euclidean_position());
+                    painter.circle(connection_config.range);
+                    painter.set_translation(Vec3::ZERO);
+                }
+                _ => {}
+            }
         }
     }
 }

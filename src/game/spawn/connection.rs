@@ -3,7 +3,12 @@ use bevy::{
     prelude::*,
 };
 
-use crate::game::interaction::{InteractionState, MousePosition};
+use crate::{
+    game::interaction::{InteractionState, MousePosition},
+    AppSet,
+};
+
+use super::planet::{OrbitalPosition, Planet};
 
 #[derive(Event, Debug)]
 pub struct InitiateConnection(pub Entity);
@@ -43,12 +48,19 @@ impl ConnectionProperties {
 #[reflect(Component)]
 pub struct ConnectionUnderConstruction;
 
+#[derive(Resource, Default)]
+pub struct ConnectionConfig {
+    pub range: f32,
+}
+
 pub(super) fn plugin(app: &mut App) {
+    app.insert_resource(ConnectionConfig { range: 200.0 });
     app.observe(initiate_connection);
     app.add_systems(
         Update,
         update_connections.run_if(resource_changed::<MousePosition>),
     );
+    app.add_systems(Update, check_for_invalid_connections.in_set(AppSet::Update));
 }
 
 fn initiate_connection(
@@ -78,5 +90,42 @@ fn update_connections(
 ) {
     for mut connection_target in &mut query {
         *connection_target = ConnectionTarget::Position(mouse_position.get_pos_3d());
+    }
+}
+
+fn check_for_invalid_connections(
+    mut commands: Commands,
+    connection_query: Query<(
+        &ConnectionAnchor,
+        &ConnectionTarget,
+        &ConnectionProperties,
+        Entity,
+    )>,
+    planet_query: Query<&OrbitalPosition, With<Planet>>,
+) {
+    for (anchor, target, properties, entity) in &connection_query {
+        // Check the length of the connection
+        if let Ok(orbital_position) = planet_query.get(anchor.satellite) {
+            let start = orbital_position.get_euclidean_position();
+            let end = match *target {
+                ConnectionTarget::Satellite(target_planet) => {
+                    if let Ok(target_position) = planet_query.get(target_planet) {
+                        target_position.get_euclidean_position()
+                    } else {
+                        Vec3::ZERO
+                    }
+                }
+                ConnectionTarget::Position(pos) => pos,
+            };
+
+            if !properties.is_valid_range_sqr((end - start).length_squared()) {
+                match target {
+                    ConnectionTarget::Satellite(_) => {
+                        commands.entity(entity).despawn();
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
 }
