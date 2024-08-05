@@ -145,8 +145,7 @@ fn process_mouse(
     window_query: Query<&Window, With<PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<IsDefaultUiCamera>>,
 ) {
-    if window_query.is_empty()
-    {
+    if window_query.is_empty() {
         return;
     }
 

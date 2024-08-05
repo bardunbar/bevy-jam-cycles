@@ -1,4 +1,3 @@
-
 use bevy::prelude::*;
 
 use crate::AppSet;
@@ -35,7 +34,6 @@ pub struct ResourceContainer {
     pub resources: Vec<GameResource>,
 }
 
-
 fn tick_resource_timer(
     mut commands: Commands,
     time: Res<Time>,
@@ -52,7 +50,6 @@ fn process_spawn_resource(
     _trigger: Trigger<DoResourceSpawn>,
     mut spawner_query: Query<(&ResourceSpawner, &mut ResourceContainer)>,
 ) {
-
     for (spawner, mut container) in &mut spawner_query {
         container.resources.push(spawner.spawn_type);
         info!("Created game resource: {:?}", spawner.spawn_type);

@@ -8,8 +8,8 @@ pub mod audio;
 mod interaction;
 mod movement;
 pub mod rendering;
-pub mod spawn;
 pub mod resource;
+pub mod spawn;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
