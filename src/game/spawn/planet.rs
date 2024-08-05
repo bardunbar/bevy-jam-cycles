@@ -1,6 +1,7 @@
 use bevy::{color::palettes::css::WHITE, prelude::*};
 
-use crate::{game::interaction::InteractionState, screen::Screen};
+//
+use crate::{game::{interaction::InteractionState, resource::{GameResource, ResourceContainer, ResourceSpawner}}, screen::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_planets);
@@ -88,6 +89,12 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             position: 5.22,
             radius: 200.0,
         },
+        ResourceSpawner {
+            spawn_type: GameResource::Material,
+        },
+        ResourceContainer {
+            resources: Vec::new(),
+        }
     ));
 
     commands.spawn((

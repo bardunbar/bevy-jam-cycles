@@ -145,6 +145,11 @@ fn process_mouse(
     window_query: Query<&Window, With<PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<IsDefaultUiCamera>>,
 ) {
+    if window_query.is_empty()
+    {
+        return;
+    }
+
     let (camera, camera_transform) = camera_query.single();
     let window = window_query.single();
 

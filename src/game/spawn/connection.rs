@@ -119,11 +119,8 @@ fn check_for_invalid_connections(
             };
 
             if !properties.is_valid_range_sqr((end - start).length_squared()) {
-                match target {
-                    ConnectionTarget::Satellite(_) => {
-                        commands.entity(entity).despawn();
-                    }
-                    _ => {}
+                if let ConnectionTarget::Satellite(_) = target {
+                    commands.entity(entity).despawn();
                 }
             }
         }

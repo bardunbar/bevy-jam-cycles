@@ -131,16 +131,13 @@ fn render_construction_range(
 
     if construction_query.is_empty() {
         for (orbital_position, interaction) in &hover_planet_query {
-            match interaction {
-                InteractionState::Hovered => {
-                    painter.thickness = 1.0;
-                    painter.hollow = true;
-                    painter.set_color(Color::Srgba(DARK_ORANGE));
-                    painter.set_translation(orbital_position.get_euclidean_position());
-                    painter.circle(connection_config.range);
-                    painter.set_translation(Vec3::ZERO);
-                }
-                _ => {}
+            if *interaction == InteractionState::Hovered {
+                painter.thickness = 1.0;
+                painter.hollow = true;
+                painter.set_color(Color::Srgba(DARK_ORANGE));
+                painter.set_translation(orbital_position.get_euclidean_position());
+                painter.circle(connection_config.range);
+                painter.set_translation(Vec3::ZERO);
             }
         }
     }

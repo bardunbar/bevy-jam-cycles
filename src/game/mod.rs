@@ -9,6 +9,7 @@ mod interaction;
 mod movement;
 pub mod rendering;
 pub mod spawn;
+pub mod resource;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -19,5 +20,6 @@ pub(super) fn plugin(app: &mut App) {
         spawn::plugin,
         rendering::plugin,
         interaction::plugin,
+        resource::plugin,
     ));
 }
