@@ -3,20 +3,19 @@ use std::f32::consts::PI;
 use bevy::{color::palettes::css::DARK_ORANGE, ecs::query::QueryEntityError, prelude::*};
 use bevy_vector_shapes::{
     prelude::ShapePainter,
-    shapes::{Cap, DiscPainter, LinePainter},
+    shapes::{Cap, DiscPainter, LinePainter, RegularPolygonPainter},
 };
 
 use crate::AppSet;
 
 use super::{
-    interaction::InteractionState,
-    spawn::{
+    interaction::InteractionState, resource::ResourceContainer, spawn::{
         connection::{
             ConnectionAnchor, ConnectionConfig, ConnectionProperties, ConnectionTarget,
             ConnectionUnderConstruction,
         },
         planet::{OrbitalPosition, Planet, SatelliteProperties},
-    },
+    }
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -26,6 +25,7 @@ pub(super) fn plugin(app: &mut App) {
             render_orbits,
             render_satellites,
             render_connections,
+            render_resources,
             render_construction_range,
         )
             .chain()
@@ -139,6 +139,25 @@ fn render_construction_range(
                 painter.circle(connection_config.range);
                 painter.set_translation(Vec3::ZERO);
             }
+        }
+    }
+}
+
+fn render_resources(
+    mut painter: ShapePainter,
+    planet_query: Query<(&OrbitalPosition, &SatelliteProperties, &ResourceContainer)>,
+) {
+    for (position, properties, container) in &planet_query {
+        let pos = position.get_euclidean_position();
+        let resource_pos = pos + Vec3::new(-properties.radius - 5.0, properties.radius + 5.0, 0.0);
+
+        painter.set_translation(resource_pos);
+        painter.roundness = 0.1;
+        painter.hollow = false;
+
+        for _resource in &container.resources {
+            painter.ngon(3.0, 5.0);
+            painter.translate(Vec3::Y * 5.0 * 2.0);
         }
     }
 }
