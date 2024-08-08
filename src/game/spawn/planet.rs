@@ -4,7 +4,7 @@ use bevy::{color::palettes::css::WHITE, prelude::*};
 use crate::{
     game::{
         interaction::InteractionState,
-        resource::{GameResource, ResourceContainer, ResourceSpawner},
+        resource::{GameResource, ResourceConsumer, ResourceContainer, ResourceSpawner},
     },
     screen::Screen,
 };
@@ -58,6 +58,13 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
         },
         StateScoped(Screen::Playing),
         InteractionState::default(),
+        ResourceConsumer {
+            demands: vec![
+                GameResource::Material,
+                GameResource::Material,
+                GameResource::Material,
+            ],
+        },
         OrbitalMovement { speed: 0.2 },
         OrbitalPosition {
             position: 1.23,
@@ -112,6 +119,13 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
         },
         StateScoped(Screen::Playing),
         InteractionState::default(),
+        ResourceConsumer {
+            demands: vec![
+                GameResource::Material,
+                GameResource::Material,
+                GameResource::Material,
+            ],
+        },
         OrbitalMovement { speed: 0.05 },
         OrbitalPosition {
             position: 0.3,

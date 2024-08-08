@@ -24,6 +24,11 @@ pub struct ResourceSpawner {
     pub spawn_type: GameResource,
 }
 
+#[derive(Component)]
+pub struct ResourceConsumer {
+    pub demands: Vec<GameResource>,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum GameResource {
     Material,
@@ -51,7 +56,9 @@ fn process_spawn_resource(
     mut spawner_query: Query<(&ResourceSpawner, &mut ResourceContainer)>,
 ) {
     for (spawner, mut container) in &mut spawner_query {
-        container.resources.push(spawner.spawn_type);
-        info!("Created game resource: {:?}", spawner.spawn_type);
+        if container.resources.len() < 6 {
+            container.resources.push(spawner.spawn_type);
+            info!("Created game resource: {:?}", spawner.spawn_type);
+        }
     }
 }

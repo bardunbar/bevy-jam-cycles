@@ -1,6 +1,10 @@
 use std::f32::consts::PI;
 
-use bevy::{color::palettes::css::DARK_ORANGE, ecs::query::QueryEntityError, prelude::*};
+use bevy::{
+    color::palettes::css::{DARK_ORANGE, DARK_SALMON, WHITE},
+    ecs::query::QueryEntityError,
+    prelude::*,
+};
 use bevy_vector_shapes::{
     prelude::ShapePainter,
     shapes::{Cap, DiscPainter, LinePainter, RegularPolygonPainter},
@@ -9,13 +13,15 @@ use bevy_vector_shapes::{
 use crate::AppSet;
 
 use super::{
-    interaction::InteractionState, resource::ResourceContainer, spawn::{
+    interaction::InteractionState,
+    resource::{ResourceConsumer, ResourceContainer},
+    spawn::{
         connection::{
             ConnectionAnchor, ConnectionConfig, ConnectionProperties, ConnectionTarget,
             ConnectionUnderConstruction,
         },
         planet::{OrbitalPosition, Planet, SatelliteProperties},
-    }
+    },
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -26,6 +32,7 @@ pub(super) fn plugin(app: &mut App) {
             render_satellites,
             render_connections,
             render_resources,
+            render_demands,
             render_construction_range,
         )
             .chain()
@@ -143,21 +150,55 @@ fn render_construction_range(
     }
 }
 
+const RESOURCE_RADIUS: f32 = 7.0;
+
 fn render_resources(
     mut painter: ShapePainter,
     planet_query: Query<(&OrbitalPosition, &SatelliteProperties, &ResourceContainer)>,
 ) {
     for (position, properties, container) in &planet_query {
         let pos = position.get_euclidean_position();
-        let resource_pos = pos + Vec3::new(-properties.radius - 5.0, properties.radius + 5.0, 0.0);
+        let resource_pos = pos
+            + Vec3::new(
+                -properties.radius - RESOURCE_RADIUS,
+                properties.radius + RESOURCE_RADIUS,
+                0.0,
+            );
 
         painter.set_translation(resource_pos);
         painter.roundness = 0.1;
         painter.hollow = false;
+        painter.set_color(Color::Srgba(WHITE));
 
         for _resource in &container.resources {
-            painter.ngon(3.0, 5.0);
-            painter.translate(Vec3::Y * 5.0 * 2.0);
+            painter.ngon(3.0, RESOURCE_RADIUS);
+            painter.translate(Vec3::Y * RESOURCE_RADIUS * 2.0);
+        }
+    }
+}
+
+fn render_demands(
+    mut painter: ShapePainter,
+    planet_query: Query<(&OrbitalPosition, &SatelliteProperties, &ResourceConsumer)>,
+) {
+    for (position, properties, consumer) in &planet_query {
+        let pos = position.get_euclidean_position();
+        let resource_pos = pos
+            + Vec3::new(
+                properties.radius + RESOURCE_RADIUS,
+                properties.radius + RESOURCE_RADIUS,
+                0.0,
+            );
+
+        painter.set_translation(resource_pos);
+        painter.roundness = 0.1;
+        painter.thickness = 0.75;
+        painter.hollow = true;
+        painter.set_color(Color::Srgba(DARK_SALMON));
+
+        for _resource in &consumer.demands {
+            painter.ngon(3.0, RESOURCE_RADIUS);
+            painter.translate(Vec3::Y * RESOURCE_RADIUS * 2.0);
         }
     }
 }

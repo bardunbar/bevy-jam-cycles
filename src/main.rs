@@ -5,7 +5,8 @@ use bevy::prelude::*;
 use bevy_jam_cycles::AppPlugin;
 
 fn main() -> AppExit {
-    App::new().add_plugins(AppPlugin)
+    App::new()
+        .add_plugins(AppPlugin)
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Msaa::Off)
         .run()

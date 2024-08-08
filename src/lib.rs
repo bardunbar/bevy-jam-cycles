@@ -5,7 +5,11 @@ mod screen;
 mod ui;
 
 use bevy::{
-    asset::AssetMetaCheck, audio::{AudioPlugin, Volume}, core_pipeline::bloom::BloomSettings, prelude::*, window::WindowResolution
+    asset::AssetMetaCheck,
+    audio::{AudioPlugin, Volume},
+    core_pipeline::bloom::BloomSettings,
+    prelude::*,
+    window::WindowResolution,
 };
 use bevy_vector_shapes::Shape2dPlugin;
 
@@ -88,7 +92,6 @@ fn spawn_camera(mut commands: Commands) {
             ..Default::default()
         },
         BloomSettings::default(),
-
         // Render all UI to this camera.
         // Not strictly necessary since we only use one camera,
         // but if we don't use this component, our UI will disappear as soon
