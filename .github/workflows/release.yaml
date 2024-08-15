@@ -22,9 +22,9 @@ env:
   PACKAGE_NAME: bevy-jam-cycles
   # The itch.io page to upload to, in the format: `user-name/project-name`.
   # Comment this out to disable.
-  ITCH_TARGET: bardunbar/bevy-jam-cycles
+  ITCH_TARGET: dunbargames/ilc
   # The organization or author that owns the rights to the game.
-  OWNER: bardunbar
+  OWNER: dunbargames
   # The path to the assets directory.
   ASSETS_DIR: assets
   # Whether packages produced by this workflow should be uploaded to the Github release.
@@ -60,26 +60,26 @@ jobs:
             package_ext: .zip
             runner: ubuntu-latest
 
-          - platform: linux
-            targets: x86_64-unknown-linux-gnu
-            profile: release-native
-            features: bevy/wayland
-            package_ext: .zip
-            runner: ubuntu-latest
+          # - platform: linux
+          #   targets: x86_64-unknown-linux-gnu
+          #   profile: release-native
+          #   features: bevy/wayland
+          #   package_ext: .zip
+          #   runner: ubuntu-latest
 
-          - platform: windows
-            targets: x86_64-pc-windows-msvc
-            profile: release-native
-            binary_ext: .exe
-            package_ext: .zip
-            runner: windows-latest
+          # - platform: windows
+          #   targets: x86_64-pc-windows-msvc
+          #   profile: release-native
+          #   binary_ext: .exe
+          #   package_ext: .zip
+          #   runner: windows-latest
 
-          - platform: macos
-            targets: x86_64-apple-darwin aarch64-apple-darwin
-            profile: release-native
-            out_dir_suffix: .app/Contents/MacOS
-            package_ext: .dmg
-            runner: macos-latest
+          # - platform: macos
+          #   targets: x86_64-apple-darwin aarch64-apple-darwin
+          #   profile: release-native
+          #   out_dir_suffix: .app/Contents/MacOS
+          #   package_ext: .dmg
+          #   runner: macos-latest
     runs-on: ${{ matrix.runner }}
     defaults:
       run:

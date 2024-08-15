@@ -62,3 +62,6 @@ fn process_spawn_resource(
         }
     }
 }
+
+// fn calculate_resource_gradients(
+// )
