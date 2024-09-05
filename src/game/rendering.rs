@@ -30,7 +30,7 @@ pub(super) fn plugin(app: &mut App) {
         (
             render_orbits,
             render_satellites,
-            // render_connections,
+            render_connections,
             render_resources,
             render_demands,
             render_construction_range,
@@ -77,7 +77,7 @@ fn render_satellites(
     painter.set_translation(Vec3::ZERO);
 }
 
-fn _render_connections(
+fn render_connections(
     mut painter: ShapePainter,
     connection_query: Query<(&ConnectionAnchor, &ConnectionTarget, &ConnectionProperties)>,
     planet_query: Query<(&Planet, &OrbitalPosition, &SatelliteProperties)>,
