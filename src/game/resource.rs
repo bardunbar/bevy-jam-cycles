@@ -2,9 +2,12 @@ use std::collections::HashSet;
 
 use bevy::prelude::*;
 
-use crate::AppSet;
+use crate::{screen::Screen, AppSet};
 
-use super::spawn::connection::{ConnectionAnchor, ConnectionTarget, ConnectionUnderConstruction};
+use super::spawn::{
+    connection::{ConnectionAnchor, ConnectionTarget, ConnectionUnderConstruction},
+    planet::OrbitalPosition,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.insert_resource(ResourceSpawnTimer {
@@ -17,9 +20,17 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(Update, tick_resource_timers.in_set(AppSet::TickTimers));
     app.add_systems(Update, tick_transport_timers.in_set(AppSet::TickTimers));
+    app.add_systems(
+        Update,
+        (
+            process_unclaimed_resources,
+            (update_transport, process_transit_stops).chain(),
+        )
+            .in_set(AppSet::Update),
+    );
+    app.add_systems(Update, process_demands.in_set(AppSet::PrepareUpdate));
 
     app.observe(process_spawn_resource);
-    app.observe(do_resource_transport);
 }
 
 #[derive(Resource)]
@@ -48,14 +59,49 @@ pub struct ResourceConsumer {
     pub demands: Vec<GameResource>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameResource {
     Material,
 }
 
 #[derive(Component)]
+pub struct GameResourceInStorage {
+    pub satellite: Entity,
+}
+
+#[derive(Component)]
+pub struct GameResourceInTransit {
+    pub route: Vec<Entity>,
+    pub claim: Entity,
+    pub position: f32,
+}
+
+#[derive(Component)]
+struct UpdateProgress;
+
+#[derive(Component)]
+pub struct GameResourceDemand {
+    pub satellite: Entity,
+    pub claim: Option<Entity>,
+}
+
+#[derive(Component)]
 pub struct ResourceContainer {
-    pub resources: Vec<GameResource>,
+    // pub resources: Vec<GameResource>,
+    pub storage_count: usize,
+    pub storage_size: usize,
+}
+
+#[derive(Bundle)]
+struct GameResourceBundle {
+    resource: GameResource,
+    storage: GameResourceInStorage,
+}
+
+#[derive(Bundle)]
+struct GameResourceDemandBundle {
+    resource: GameResource,
+    demand: GameResourceDemand,
 }
 
 fn tick_resource_timers(
@@ -82,70 +128,121 @@ fn tick_transport_timers(
     }
 }
 
+fn process_demands(
+    mut commands: Commands,
+    mut consumer_query: Query<(Entity, &mut ResourceConsumer), Changed<ResourceConsumer>>,
+) {
+    for (satellite, mut consumer) in consumer_query.iter_mut() {
+        if !consumer.demands.is_empty() {
+            for demand in consumer.demands.iter() {
+                commands.spawn((
+                    GameResourceDemandBundle {
+                        resource: *demand,
+                        demand: GameResourceDemand {
+                            satellite,
+                            claim: None,
+                        },
+                    },
+                    StateScoped(Screen::Playing),
+                ));
+            }
+
+            consumer.demands.clear();
+        }
+    }
+}
+
 fn process_spawn_resource(
     _trigger: Trigger<DoResourceSpawn>,
-    mut spawner_query: Query<(&ResourceSpawner, &mut ResourceContainer)>,
+    mut commands: Commands,
+    mut spawner_query: Query<(Entity, &ResourceSpawner, &mut ResourceContainer)>,
 ) {
-    for (spawner, mut container) in &mut spawner_query {
-        if container.resources.len() < 6 {
-            container.resources.push(spawner.spawn_type);
+    for (entity, spawner, mut container) in &mut spawner_query {
+        if container.storage_count < container.storage_size {
+            commands.spawn((
+                GameResourceBundle {
+                    resource: spawner.spawn_type,
+                    storage: GameResourceInStorage { satellite: entity },
+                },
+                StateScoped(Screen::Playing),
+            ));
+            container.storage_count += 1;
+
             info!("Created game resource: {:?}", spawner.spawn_type);
         }
     }
 }
 
-fn do_resource_transport(
-    _trigger: Trigger<DoResourceTransport>,
-    mut container_query: Query<(&mut ResourceContainer, Entity)>,
-    mut consumer_query: Query<&mut ResourceConsumer>,
+fn process_unclaimed_resources(
+    mut commands: Commands,
+    resource_in_storage_query: Query<(Entity, &GameResource, &GameResourceInStorage)>,
+    mut demand_query: Query<(&mut GameResourceDemand, &GameResource, Entity)>,
+    mut container_query: Query<&mut ResourceContainer>,
     connection_query: Query<
         (&ConnectionAnchor, &ConnectionTarget, Entity),
         Without<ConnectionUnderConstruction>,
     >,
 ) {
-    for (mut container, entity) in &mut container_query {
-        if !container.resources.is_empty() {
-            // Attempt to find a consumer for the first resource
-            let cur_resource = &container.resources[0];
+    let mut claimed_this_frame = HashSet::new();
 
+    for (mut demand, demanded_resource, demand_entity) in &mut demand_query {
+        if demand.claim.is_none() {
+            // Search for a resource in storage that is unclaimed
             let mut visited = HashSet::new();
-            let mut open_list = Vec::new();
-            open_list.push(entity);
+            let mut open_list: Vec<(Entity, Vec<Entity>)> = Vec::new();
+            open_list.push((demand.satellite, vec![demand.satellite]));
 
-            let mut target_consumer: Option<Entity> = None;
-
-            while !open_list.is_empty() {
-                let cur_planet = open_list.remove(0);
+            'search_for_claim: while !open_list.is_empty() {
+                let (cur_planet, mut planet_path) = open_list.remove(0);
                 visited.insert(cur_planet);
 
-                // Check for any consumers
-                if let Ok(consumer) = consumer_query.get(cur_planet) {
-                    if consumer.demands.contains(cur_resource) {
-                        target_consumer = Some(cur_planet);
-                        break;
+                // Check for any resources
+                for (resource_entity, resource, storage) in &resource_in_storage_query {
+                    if !claimed_this_frame.contains(&resource_entity)
+                        && resource == demanded_resource
+                        && storage.satellite == cur_planet
+                    {
+                        demand.claim = Some(resource_entity);
+
+                        planet_path.reverse();
+                        commands
+                            .entity(resource_entity)
+                            .remove::<GameResourceInStorage>()
+                            .insert(GameResourceInTransit {
+                                route: planet_path,
+                                claim: demand_entity,
+                                position: 0.0,
+                            });
+
+                        if let Ok(mut container) = container_query.get_mut(storage.satellite) {
+                            if container.storage_count > 0 {
+                                container.storage_count -= 1;
+                            } else {
+                                error!("Storage was empty when resource was removed!")
+                            }
+                        }
+
+                        claimed_this_frame.insert(resource_entity);
+                        break 'search_for_claim;
                     }
                 }
 
+                // Otherwise, keep searching
                 for (anchor, target, _) in &connection_query {
                     if let ConnectionTarget::Satellite(target_entity) = target {
                         if anchor.satellite == cur_planet {
                             if !visited.contains(target_entity) {
-                                open_list.push(*target_entity);
+                                let mut new_path = planet_path.clone();
+                                new_path.push(*target_entity);
+                                open_list.push((*target_entity, new_path));
                             }
                         } else if *target_entity == cur_planet
                             && !visited.contains(&anchor.satellite)
                         {
-                            open_list.push(anchor.satellite);
+                            let mut new_path = planet_path.clone();
+                            new_path.push(anchor.satellite);
+                            open_list.push((anchor.satellite, new_path));
                         }
-                    }
-                }
-            }
-
-            if let Some(consumer_entity) = target_consumer {
-                if let Ok(mut consumer) = consumer_query.get_mut(consumer_entity) {
-                    if let Some(index) = consumer.demands.iter().position(|&e| e == *cur_resource) {
-                        consumer.demands.remove(index);
-                        container.resources.remove(0);
                     }
                 }
             }
@@ -153,5 +250,52 @@ fn do_resource_transport(
     }
 }
 
-// fn calculate_resource_gradients(
-// )
+const TRANSPORT_SPEED: f32 = 40.0;
+
+fn update_transport(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut transporting_query: Query<(Entity, &mut GameResourceInTransit)>,
+    planet_query: Query<&OrbitalPosition>,
+) {
+    for (resource_entity, mut transit) in transporting_query.iter_mut() {
+        let start = planet_query
+            .get(transit.route[0])
+            .unwrap()
+            .get_euclidean_position();
+        let end = planet_query
+            .get(transit.route[1])
+            .unwrap()
+            .get_euclidean_position();
+        let distance = start.distance(end);
+
+        let current = distance * transit.position;
+        let next = current + time.delta().as_secs_f32() * TRANSPORT_SPEED;
+
+        transit.position = next / distance;
+
+        if transit.position >= 1.0 {
+            commands.entity(resource_entity).insert(UpdateProgress);
+        }
+    }
+}
+
+fn process_transit_stops(
+    mut commands: Commands,
+    mut transporting_query: Query<(Entity, &mut GameResourceInTransit), With<UpdateProgress>>,
+) {
+    for (entity, mut transit) in transporting_query.iter_mut() {
+        transit.route.remove(0);
+
+        if transit.route.len() < 2 {
+            // We have arrived at our destination! Attempt to process the claim!
+            commands.entity(transit.claim).despawn();
+            commands.entity(entity).despawn();
+        } else {
+            info!("Resource arrived at mid point, time to continue");
+            // We are part way to our destination... verify our path's integrity
+            transit.position = 0.0;
+            commands.entity(entity).remove::<UpdateProgress>();
+        }
+    }
+}

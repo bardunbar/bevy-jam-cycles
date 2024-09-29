@@ -75,6 +75,8 @@ enum AppSet {
     TickTimers,
     /// Record player input.
     RecordInput,
+    /// Prepare To Update
+    PrepareUpdate,
     /// Do everything else (consider splitting this into further variants).
     Update,
     /// Render Vector Shapes

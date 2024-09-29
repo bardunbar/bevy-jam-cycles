@@ -14,7 +14,7 @@ use crate::AppSet;
 
 use super::{
     interaction::InteractionState,
-    resource::{ResourceConsumer, ResourceContainer},
+    resource::{GameResourceDemand, GameResourceInTransit, ResourceContainer},
     spawn::{
         connection::{
             ConnectionAnchor, ConnectionConfig, ConnectionProperties, ConnectionTarget,
@@ -33,6 +33,7 @@ pub(super) fn plugin(app: &mut App) {
             render_connections,
             render_resources,
             render_demands,
+            render_transports,
             render_construction_range,
         )
             .chain()
@@ -170,7 +171,9 @@ fn render_resources(
         painter.hollow = false;
         painter.set_color(Color::Srgba(WHITE));
 
-        for _resource in &container.resources {
+        // Todo need to do this by a resource query to get type, in the future when this matters
+        let count = container.storage_count;
+        for _ in 0..count {
             painter.ngon(3.0, RESOURCE_RADIUS);
             painter.translate(Vec3::Y * RESOURCE_RADIUS * 2.0);
         }
@@ -179,9 +182,10 @@ fn render_resources(
 
 fn render_demands(
     mut painter: ShapePainter,
-    planet_query: Query<(&OrbitalPosition, &SatelliteProperties, &ResourceConsumer)>,
+    planet_query: Query<(&OrbitalPosition, &SatelliteProperties, Entity)>,
+    demand_query: Query<&GameResourceDemand>,
 ) {
-    for (position, properties, consumer) in &planet_query {
+    for (position, properties, planet_entity) in &planet_query {
         let pos = position.get_euclidean_position();
         let resource_pos = pos
             + Vec3::new(
@@ -196,9 +200,41 @@ fn render_demands(
         painter.hollow = true;
         painter.set_color(Color::Srgba(DARK_SALMON));
 
-        for _resource in &consumer.demands {
-            painter.ngon(3.0, RESOURCE_RADIUS);
-            painter.translate(Vec3::Y * RESOURCE_RADIUS * 2.0);
+        for demand in demand_query.iter() {
+            if demand.satellite == planet_entity {
+                painter.ngon(3.0, RESOURCE_RADIUS);
+                painter.translate(Vec3::Y * RESOURCE_RADIUS * 2.0);
+            }
         }
+
+        // for _resource in &consumer.demands {
+
+        // }
+    }
+}
+
+fn render_transports(
+    mut painter: ShapePainter,
+    transport_query: Query<&GameResourceInTransit>,
+    planet_query: Query<&OrbitalPosition>,
+) {
+    painter.roundness = 0.1;
+    painter.hollow = false;
+    painter.set_color(Color::Srgba(WHITE));
+
+    for transit in transport_query.iter() {
+        let start = planet_query
+            .get(transit.route[0])
+            .unwrap()
+            .get_euclidean_position();
+        let end = planet_query
+            .get(transit.route[1])
+            .unwrap()
+            .get_euclidean_position();
+
+        let pos = start + (end - start) * transit.position;
+
+        painter.set_translation(pos);
+        painter.ngon(3.0, RESOURCE_RADIUS);
     }
 }
