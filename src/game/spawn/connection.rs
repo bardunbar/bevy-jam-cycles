@@ -56,7 +56,10 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         update_connections.run_if(resource_changed::<MousePosition>),
     );
-    app.add_systems(Update, check_for_invalid_connections.in_set(AppSet::PrepareUpdate));
+    app.add_systems(
+        Update,
+        check_for_invalid_connections.in_set(AppSet::PrepareUpdate),
+    );
 }
 
 fn initiate_connection(
