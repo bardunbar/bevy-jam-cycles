@@ -70,6 +70,10 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             position: 1.23,
             radius: 64.0,
         },
+        ResourceContainer {
+            storage_count: 0,
+            storage_size: 6,
+        },
     ));
 
     commands.spawn((
@@ -85,6 +89,10 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
         OrbitalPosition {
             position: 4.22,
             radius: 128.0,
+        },
+        ResourceContainer {
+            storage_count: 0,
+            storage_size: 6,
         },
     ));
 
@@ -132,6 +140,10 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             position: 0.3,
             radius: 256.0,
         },
+        ResourceContainer {
+            storage_count: 0,
+            storage_size: 6,
+        },
     ));
 
     commands.spawn((
@@ -148,6 +160,10 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             position: 5.4,
             radius: 300.0,
         },
+        ResourceContainer {
+            storage_count: 0,
+            storage_size: 6,
+        },
     ));
 
     commands.spawn((
@@ -163,6 +179,10 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
         OrbitalPosition {
             position: 5.5,
             radius: 336.0,
+        },
+        ResourceContainer {
+            storage_count: 0,
+            storage_size: 6,
         },
     ));
 }

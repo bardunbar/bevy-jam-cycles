@@ -307,6 +307,12 @@ fn update_transport(
 fn process_transit_stops(
     mut commands: Commands,
     mut transporting_query: Query<(Entity, &mut GameResourceInTransit), With<UpdateProgress>>,
+    mut demand_query: Query<&mut GameResourceDemand>,
+    mut container_query: Query<&mut ResourceContainer>,
+    connection_query: Query<
+        (&ConnectionAnchor, &ConnectionTarget),
+        Without<ConnectionUnderConstruction>,
+    >,
 ) {
     for (entity, mut transit) in transporting_query.iter_mut() {
         transit.route.remove(0);
@@ -316,13 +322,64 @@ fn process_transit_stops(
             commands.entity(transit.claim).despawn();
             commands.entity(entity).despawn();
         } else {
-            info!("Resource arrived at mid point, time to continue");
             // We are part way to our destination... verify our path's integrity
-            transit.position = 0.0;
-            commands
-                .entity(entity)
-                .remove::<UpdateProgress>()
-                .insert(PendingDeparture);
+            let mut valid = true;
+            transit
+                .route
+                .iter()
+                .zip(transit.route.iter().skip(1))
+                .for_each(|(start, end)| {
+                    let mut found = false;
+                    // Verify that we can find a connection that terminates at these two entities
+                    for (anchor, target) in connection_query.iter() {
+                        if let ConnectionTarget::Satellite(target_entity) = target {
+                            if anchor.satellite == *start && target_entity == end
+                                || anchor.satellite == *end && target_entity == start
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    valid &= found;
+                });
+
+            if valid {
+                transit.position = 0.0;
+                commands
+                    .entity(entity)
+                    .remove::<UpdateProgress>()
+                    .insert(PendingDeparture);
+            } else {
+                // Remove the claim
+                if let Ok(mut demand) = demand_query.get_mut(transit.claim) {
+                    demand.claim = None;
+                }
+
+                // Get the local resource container
+                let container_entity = transit.route[0];
+
+                // Get the resource container on this hub (if it exists!)
+                if let Ok(mut container) = container_query.get_mut(container_entity) {
+                    // Attempt to put this resource in the container, otherwise destroy it
+                    if container.storage_count < container.storage_size {
+                        container.storage_count += 1;
+
+                        // Remove the transit and add in the storage
+                        commands
+                            .entity(entity)
+                            .remove::<GameResourceInTransit>()
+                            .insert(GameResourceInStorage {
+                                satellite: container_entity,
+                            });
+                    } else {
+                        commands.entity(entity).despawn();
+                    }
+                } else {
+                    commands.entity(entity).despawn();
+                }
+            }
         }
     }
 }
