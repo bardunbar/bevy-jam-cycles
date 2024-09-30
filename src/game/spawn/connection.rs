@@ -35,10 +35,6 @@ pub struct ConnectionProperties {
 }
 
 impl ConnectionProperties {
-    // pub fn is_valid_range(&self, range: f32) -> bool {
-    //     range <= self.range
-    // }
-
     pub fn is_valid_range_sqr(&self, range_sqr: f32) -> bool {
         range_sqr <= self.range * self.range
     }
@@ -60,7 +56,7 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         update_connections.run_if(resource_changed::<MousePosition>),
     );
-    app.add_systems(Update, check_for_invalid_connections.in_set(AppSet::Update));
+    app.add_systems(Update, check_for_invalid_connections.in_set(AppSet::PrepareUpdate));
 }
 
 fn initiate_connection(
