@@ -15,7 +15,7 @@ pub(super) fn plugin(app: &mut App) {
     });
 
     app.insert_resource(ResourceTransportTimer {
-        timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+        timer: Timer::from_seconds(0.5, TimerMode::Repeating),
     });
 
     app.add_systems(Update, tick_resource_timers.in_set(AppSet::TickTimers));
@@ -31,6 +31,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, process_demands.in_set(AppSet::PrepareUpdate));
 
     app.observe(process_spawn_resource);
+    app.observe(process_resource_departures);
 }
 
 #[derive(Resource)]
@@ -47,7 +48,7 @@ pub struct ResourceTransportTimer {
 pub struct DoResourceSpawn;
 
 #[derive(Event)]
-pub struct DoResourceTransport;
+pub struct DoResourceDepartures;
 
 #[derive(Component)]
 pub struct ResourceSpawner {
@@ -87,10 +88,12 @@ pub struct GameResourceDemand {
 
 #[derive(Component)]
 pub struct ResourceContainer {
-    // pub resources: Vec<GameResource>,
     pub storage_count: usize,
     pub storage_size: usize,
 }
+
+#[derive(Component)]
+pub struct PendingDeparture;
 
 #[derive(Bundle)]
 struct GameResourceBundle {
@@ -124,7 +127,7 @@ fn tick_transport_timers(
     transport_time.timer.tick(time.delta());
 
     if transport_time.timer.finished() {
-        commands.trigger(DoResourceTransport);
+        commands.trigger(DoResourceDepartures);
     }
 }
 
@@ -173,6 +176,24 @@ fn process_spawn_resource(
     }
 }
 
+fn process_resource_departures(
+    _trigger: Trigger<DoResourceDepartures>,
+    mut commands: Commands,
+    awaiting_transport_query: Query<(Entity, &GameResourceInTransit), With<PendingDeparture>>,
+    planet_query: Query<Entity, With<OrbitalPosition>>,
+) {
+    'outer: for satellite in planet_query.iter() {
+        for (resource_entity, transit) in awaiting_transport_query.iter() {
+            if transit.route[0] == satellite {
+                commands
+                    .entity(resource_entity)
+                    .remove::<PendingDeparture>();
+                break 'outer;
+            }
+        }
+    }
+}
+
 fn process_unclaimed_resources(
     mut commands: Commands,
     resource_in_storage_query: Query<(Entity, &GameResource, &GameResourceInStorage)>,
@@ -208,11 +229,14 @@ fn process_unclaimed_resources(
                         commands
                             .entity(resource_entity)
                             .remove::<GameResourceInStorage>()
-                            .insert(GameResourceInTransit {
-                                route: planet_path,
-                                claim: demand_entity,
-                                position: 0.0,
-                            });
+                            .insert((
+                                GameResourceInTransit {
+                                    route: planet_path,
+                                    claim: demand_entity,
+                                    position: 0.0,
+                                },
+                                PendingDeparture,
+                            ));
 
                         if let Ok(mut container) = container_query.get_mut(storage.satellite) {
                             if container.storage_count > 0 {
@@ -250,12 +274,12 @@ fn process_unclaimed_resources(
     }
 }
 
-const TRANSPORT_SPEED: f32 = 40.0;
+const TRANSPORT_SPEED: f32 = 80.0;
 
 fn update_transport(
     mut commands: Commands,
     time: Res<Time>,
-    mut transporting_query: Query<(Entity, &mut GameResourceInTransit)>,
+    mut transporting_query: Query<(Entity, &mut GameResourceInTransit), Without<PendingDeparture>>,
     planet_query: Query<&OrbitalPosition>,
 ) {
     for (resource_entity, mut transit) in transporting_query.iter_mut() {
@@ -295,7 +319,10 @@ fn process_transit_stops(
             info!("Resource arrived at mid point, time to continue");
             // We are part way to our destination... verify our path's integrity
             transit.position = 0.0;
-            commands.entity(entity).remove::<UpdateProgress>();
+            commands
+                .entity(entity)
+                .remove::<UpdateProgress>()
+                .insert(PendingDeparture);
         }
     }
 }

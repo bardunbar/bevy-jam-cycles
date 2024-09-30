@@ -14,7 +14,7 @@ use crate::AppSet;
 
 use super::{
     interaction::InteractionState,
-    resource::{GameResourceDemand, GameResourceInTransit, ResourceContainer},
+    resource::{GameResourceDemand, GameResourceInTransit, PendingDeparture, ResourceContainer},
     spawn::{
         connection::{
             ConnectionAnchor, ConnectionConfig, ConnectionProperties, ConnectionTarget,
@@ -215,7 +215,7 @@ fn render_demands(
 
 fn render_transports(
     mut painter: ShapePainter,
-    transport_query: Query<&GameResourceInTransit>,
+    transport_query: Query<&GameResourceInTransit, Without<PendingDeparture>>,
     planet_query: Query<&OrbitalPosition>,
 ) {
     painter.roundness = 0.1;
