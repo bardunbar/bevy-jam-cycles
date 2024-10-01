@@ -120,6 +120,24 @@ fn check_for_invalid_connections(
             if !properties.is_valid_range_sqr((end - start).length_squared()) {
                 if let ConnectionTarget::Satellite(_) = target {
                     commands.entity(entity).despawn();
+                    continue;
+                }
+            }
+
+            // Check to see if we are intersecting the sun!
+            // Line SDF: https://www.shadertoy.com/view/Wlfyzl
+            // Since the sun is at 0,0 we can make some assumptions
+            let ba = end.xy() - start.xy();
+            let pa = -start.xy();
+
+            let h = f32::clamp(pa.dot(ba) / ba.dot(ba), 0.0, 1.0);
+            let dist_vec = pa - h * ba;
+
+            let sun_radius = 20.0;
+            if dist_vec.length_squared() < sun_radius * sun_radius {
+                if let ConnectionTarget::Satellite(_) = target {
+                    commands.entity(entity).despawn();
+                    continue;
                 }
             }
         }

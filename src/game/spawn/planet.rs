@@ -164,6 +164,9 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
             storage_count: 0,
             storage_size: 6,
         },
+        ResourceConsumer {
+            demands: Vec::new(),
+        },
     ));
 
     commands.spawn((
@@ -183,6 +186,9 @@ fn spawn_planets(_trigger: Trigger<SpawnPlanets>, mut commands: Commands) {
         ResourceContainer {
             storage_count: 0,
             storage_size: 6,
+        },
+        ResourceSpawner {
+            spawn_type: GameResource::Material,
         },
     ));
 }

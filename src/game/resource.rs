@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use bevy::prelude::*;
+use rand::Rng;
 
 use crate::{screen::Screen, AppSet};
 
@@ -12,6 +13,10 @@ use super::spawn::{
 pub(super) fn plugin(app: &mut App) {
     app.insert_resource(ResourceSpawnTimer {
         timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+    });
+
+    app.insert_resource(ResourceDemandTimer {
+        timer: Timer::from_seconds(5.0, TimerMode::Repeating),
     });
 
     app.insert_resource(ResourceTransportTimer {
@@ -31,11 +36,17 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, process_demands.in_set(AppSet::PrepareUpdate));
 
     app.observe(process_spawn_resource);
+    app.observe(process_demand_resources);
     app.observe(process_resource_departures);
 }
 
 #[derive(Resource)]
 pub struct ResourceSpawnTimer {
+    pub timer: Timer,
+}
+
+#[derive(Resource)]
+pub struct ResourceDemandTimer {
     pub timer: Timer,
 }
 
@@ -46,6 +57,9 @@ pub struct ResourceTransportTimer {
 
 #[derive(Event)]
 pub struct DoResourceSpawn;
+
+#[derive(Event)]
+pub struct DoResourceDemand;
 
 #[derive(Event)]
 pub struct DoResourceDepartures;
@@ -111,11 +125,17 @@ fn tick_resource_timers(
     mut commands: Commands,
     time: Res<Time>,
     mut resource_time: ResMut<ResourceSpawnTimer>,
+    mut demand_time: ResMut<ResourceDemandTimer>,
 ) {
     resource_time.timer.tick(time.delta());
 
     if resource_time.timer.finished() {
         commands.trigger(DoResourceSpawn);
+    }
+
+    demand_time.timer.tick(time.delta());
+    if demand_time.timer.finished() {
+        commands.trigger(DoResourceDemand);
     }
 }
 
@@ -170,8 +190,17 @@ fn process_spawn_resource(
                 StateScoped(Screen::Playing),
             ));
             container.storage_count += 1;
+        }
+    }
+}
 
-            info!("Created game resource: {:?}", spawner.spawn_type);
+fn process_demand_resources(
+    _trigger: Trigger<DoResourceDemand>,
+    mut consumer_query: Query<&mut ResourceConsumer>,
+) {
+    for mut consumer in consumer_query.iter_mut() {
+        for _ in 0..rand::thread_rng().gen_range(0..=3) {
+            consumer.demands.push(GameResource::Material);
         }
     }
 }
@@ -235,7 +264,7 @@ fn process_unclaimed_resources(
                                     claim: demand_entity,
                                     position: 0.0,
                                 },
-                                PendingDeparture,
+                                UpdateProgress,
                             ));
 
                         if let Ok(mut container) = container_query.get_mut(storage.satellite) {
@@ -274,7 +303,7 @@ fn process_unclaimed_resources(
     }
 }
 
-const TRANSPORT_SPEED: f32 = 80.0;
+const TRANSPORT_SPEED: f32 = 240.0;
 
 fn update_transport(
     mut commands: Commands,
@@ -299,6 +328,7 @@ fn update_transport(
         transit.position = next / distance;
 
         if transit.position >= 1.0 {
+            transit.route.remove(0);
             commands.entity(resource_entity).insert(UpdateProgress);
         }
     }
@@ -315,7 +345,7 @@ fn process_transit_stops(
     >,
 ) {
     for (entity, mut transit) in transporting_query.iter_mut() {
-        transit.route.remove(0);
+        // transit.route.remove(0);
 
         if transit.route.len() < 2 {
             // We have arrived at our destination! Attempt to process the claim!
